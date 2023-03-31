@@ -6,7 +6,7 @@
 
 # Introducción
 
-Mining Analytics es una aplicación web desarrollada con Dash [Dah](https://github.com/plotly/dash) como parte del Proyecto Final de la asignatura de Minería de Datos, FI UNAM. 
+Mining Analytics es una aplicación web desarrollada con [Dash](https://github.com/plotly/dash) como parte del Proyecto Final de la asignatura de Minería de Datos, FI UNAM. 
 
 ## Autores
 
