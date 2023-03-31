@@ -7,3 +7,8 @@
 # Introducción
 
 Mining Analytics es una aplicación web desarrollada con Dash como parte del Proyecto Final de la asignatura de Minería de Datos, FI UNAM. 
+
+## Autores
+
+- [@Leonardo Cruz](https://github.com/chow-chow)
+- [@Jorge González](https://github.com/JTGlez)
