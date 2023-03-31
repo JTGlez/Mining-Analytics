@@ -1,5 +1,5 @@
 <h1 align="center"> Mining Analytics </h1>
-![alt text](https://imgur.com/a/wSxj69H)
+![alt text](https://i.imgur.com/60xNzFI.png)
 
 https://imgur.com/a/wSxj69H
 
