@@ -10,5 +10,5 @@ Mining Analytics es una aplicación web desarrollada con Dash como parte del Pro
 
 ## Autores
 
-- [@Leonardo Cruz](https://github.com/chow-chow)
-- [@Jorge González](https://github.com/JTGlez)
+- [Leonardo Cruz](https://github.com/chow-chow)
+- [Jorge González](https://github.com/JTGlez)
