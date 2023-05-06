@@ -20,21 +20,15 @@ hr {
     margin: 0.3rem 0rem;
 }
 
-.banner {
-    height: 5.5rem;
-    padding: 0rem 2rem 0rem;
-    background-color: white;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
+
+.navbar-logo {
+    width: 10em; 
+    height: 3.8em;
+    margin: 0 auto;
+    padding: 0;
+    
 }
 
-.banner Img {
-    position: relative;
-    height: 3rem;
-    width: auto;
-    margin-left: 2%;
-}
 
 H5 {
     color: #2c8cff;
@@ -113,14 +107,6 @@ H5, H3 {
     vertical-align: middle;
 }
 
-#header_wait_time_min, #header_care_score {
-    display: table;
-}
-
-#header_wait_time_min > b, #header_care_score > b {
-    display: table-cell;
-    vertical-align: middle;
-}
 
 
 /*
@@ -177,21 +163,10 @@ H5, H3 {
         display: none;
     }
 
-    #wait_time_table:after {
-        content: "";
-        display: table;
-        clear: both;
+    button, .button{
+        margin-left: auto; 
+        margin-right: 0;
     }
-
-    #patient_volume_card > b, #wait_time_card > b {
-        line-height: 2.5;
-        font-size: 13px;
-        display: block;
-        text-align: center;
-    }
-
-    .annotation-text {
-        font-size: 0.8rem !important;
-    }
+    
 
 }
