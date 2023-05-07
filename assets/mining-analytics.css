@@ -1,3 +1,5 @@
+/*Estilos generales para la aplicación*/
+
 @font-face {
     font-family: Acumin;
     font-weight: bold;
@@ -39,6 +41,8 @@ H5, H3 {
     font-family: Acumin, "Helvetica Neue", sans-serif;
 }
 
+/*Estilos para las columnas de cada layout*/
+
 #left-column {
     margin-top: 20px;
     padding: 0rem 2rem;
@@ -52,21 +56,7 @@ H5, H3 {
     background-color: #f4f4f4;
     padding: 0rem 2rem;
     min-height: calc(100vh - 5.5rem);
-}
-
-.table-row {
-    height: 63px;
-    vertical-align: middle;
-    font-size: 13px;
-}
-
-.wait_time_graph > div, .patient_score_graph > div {
-    height: 100% !important;
-    width: 100% !important;
-}
-
-.draglayer {
-    cursor: pointer !important;
+    min-width: 66%
 }
 
 #intro {
@@ -75,42 +65,50 @@ H5, H3 {
     text-align: justify;
 }
 
-#control-card > p {
-    font-weight: bold;
+.table-row {
+    height: 63px;
+    vertical-align: middle;
+    font-size: 13px;
 }
 
-#patient_volume_card, #wait_time_card {
-    background-color: #FFFFFF;
-    padding: 1rem;
-    margin: auto;
-    margin-top: 20px;
+.text-upload{
+    text-align: center;
 }
 
-#patient_volume_card > b, #wait_time_card > b {
-    line-height: 2.5;
-}
-
-#wait_time_card {
-    margin: 20px 0px;
-}
-
-#patient_volume_hm {
-    height: 400px;
+.draglayer {
+    cursor: pointer !important;
 }
 
 .table-row:nth-child(even) {
     background-color: #f2f2f2;
 }
 
-.row-department > b {
-    display: table-cell;
-    vertical-align: middle;
+/*Estilos para figuras*/
+
+.crisp{
+    display: flexbox;
+    justify-content: center;
+    margin: 0 1000em;
 }
 
+.my-dropdown{
+    width: 50%;
+    margin: 0 auto;
+}
 
+.my-dropdown .Select-menu-outer{
+    display: inline-block;
+    position: relative;
+    font-family: Acumin;
+    position: absolute;
+    justify-content: center;
+    padding: 0;
+    width: 100%;
+    margin: auto;
+}
 
 /*
-  ##Device = Most of the Smartphones Mobiles / ipad (Portrait)
+  ##Diseño responsive: para mòviles (iPad, Android, Surface)
   */
 
 @media only screen and (max-width: 750px), screen and (min-width: 768px) and (max-width: 1024px) {

@@ -7,11 +7,13 @@
 
 #------------------------------------------------Importación de bibliotecas------------------------------------------------------------#
 import dash # Biblioteca principal de Dash.
-from dash import dcc, html, callback # Módulo de Dash para acceder a componentes interactivos y etiquetas de HTML.
+from dash import dcc, html, Input, Output, callback # Módulo de Dash para acceder a componentes interactivos y etiquetas de HTML.
 from dash.dependencies import Input, Output, ClientsideFunction # Dependencias de Dash para la implementación de Callbacks.
 import dash_bootstrap_components as dbc # Biblioteca de componentes de Bootstrap en Dash para el Front-End responsive.
 from modules import home, eda, pca
 import pathlib
+
+
 
 #---------------------------------------------------Definición de funciones para el front--------------------------------------------------------#
 def description_card():
@@ -43,13 +45,14 @@ def description_card():
                 children = "En esta aplicación podrás visualizar todo el proceso involucrado en un proyecto de Minería de Datos enfocado al sector tecnológico y financiero."
             ),
 
-            # Muestra una figura de CRISP-DM: falta hacerla responsive.
+            # Muestra una figura de CRISP-DM.
             html.Div(
+                style={'display': 'flex', 'align-items': 'center', 'justify-content': 'center', 'height': '35em'},
                 children=[        
                     html.Img(            
                         id="crisp",            
-                        src="/assets/crispdm.PNG",            
-                        style={'position': 'relative', 'left': '80px', 'top': '20px', 'width': '70%', 'height': 'auto'}
+                        src="/assets/crispdm.PNG",
+                        style = {'width': '25em'}
                     )    
                 ]
             ),
@@ -58,20 +61,86 @@ def description_card():
 
     )
 
+# Aquí se añaden cardboards informativos de cada módulo.
+eda_card = dbc.Card(
+    [
+        dbc.CardImg(
+            src = "",
+            top = True,
+            style = {}
+        ),
+        dbc.CardBody(
+            [
+
+            ]
+        )
+
+    ],
+)
+
+pca_card = dbc.Card(
+    [
+        dbc.CardImg(
+            src = "",
+            top = True,
+            style = {}
+        ),
+        dbc.CardBody(
+            [
+
+            ]
+        )
+
+    ],
+)
+
+forest_card = dbc.Card(
+    [
+        dbc.CardImg(
+            src = "",
+            top = True,
+            style = {}
+        ),
+        dbc.CardBody(
+            [
+
+            ]
+        )
+
+    ],
+)
+
+cluster_card = dbc.Card(
+    [
+        dbc.CardImg(
+            src = "",
+            top = True,
+            style = {}
+        ),
+        dbc.CardBody(
+            [
+
+            ]
+        )
+
+    ],
+)
+
+
+
 
 # Contenedor principal de la página en un Div.
 layout = html.Div(
-    id="app-container",
+    id = "page-content",
     children=[
 
         # Contenido principal de la aplicación: se divide en 2 columnas: una con contenido explicativo y otra para elementos interactivos.
         html.Div(
 
-            id="main-content",
             className="row",
             children=[
 
-                # Columna a la izquierda: invoca a description_card y generate_control_card para mostrar el texto explicativo de la izquierda.
+                # Columna a la izquierda: invoca a description_card para mostrar el texto explicativo de la izquierda.
                 html.Div(
                     id="left-column",
                     className="four columns",
@@ -82,15 +151,22 @@ layout = html.Div(
                     id="right-column",
                     className="eight columns",
                     children=[
-                        # Agregar un div con id "page-content" para que se muestre el contenido de la página seleccionada
-                        html.Div(id="page-content"),
-                        # Muestra una gráfica random jajaja
+                        # Muestra los módulos disponibles.
                         html.Div(
-                            id="patient_volume_card",
+                            id="exploration_modules",
                             children=[
-                                html.B("Patient Volume"),
+                                html.B("Módulos de exploración y reducción de dimensionalidad"),
                                 html.Hr(),
-                                dcc.Graph(id="patient_volume_hm"),
+                                dbc.CardGroup([eda_card, pca_card])
+                            ],
+                        ),
+
+                         html.Div(
+                            id="ml_modules",
+                            children=[
+                                html.B("Módulos de Machine Learning"),
+                                html.Hr(),
+                                dbc.CardGroup([forest_card, cluster_card])
                             ],
                         ),
 
@@ -100,22 +176,3 @@ layout = html.Div(
         ),
     ],
 )
-
-# Definición de callbacks: se ejecutan para mostrar el contenido de la página.
-@callback(Output("page-content-home", "children"), [Input("url-home", "pathname")])
-def render_page_content(pathname):
-    if pathname == "/":
-        return home.layout
-    if pathname == "/eda":
-        return eda.layout
-    elif pathname == "/pca":
-        return pca.layout
-    else:
-        return html.Div(
-        [
-            html.H1("Error 404: Página no encontrada. :(", className="text-danger"),
-            html.Hr(),
-            html.P(f"La ruta del archivo {pathname} no fue encontrada."),
-        ],
-        className="p-3 bg-light rounded-3",
-    )

@@ -6,8 +6,8 @@
 
 #------------------------------------------------Importación de bibliotecas------------------------------------------------------------#
 import dash # Biblioteca principal de Dash.
-from dash import dcc, html # Módulo de Dash para acceder a componentes interactivos y etiquetas de HTML.
-from dash.dependencies import Input, Output, ClientsideFunction # Dependencias de Dash para la implementación de Callbacks.
+from dash import dcc, html, Input, Output, callback # Módulo de Dash para acceder a componentes interactivos y etiquetas de HTML.
+from dash.dependencies import Input, Output, State # Dependencias de Dash para la implementación de Callbacks.
 import dash_bootstrap_components as dbc # Biblioteca de componentes de Bootstrap en Dash para el Front-End responsive.
 from modules import home, eda, pca
 import pathlib
@@ -22,6 +22,12 @@ app.config.suppress_callback_exceptions = True # Evita excepciones de interrupci
 # Path
 BASE_PATH = pathlib.Path(__file__).parent.resolve()
 DATA_PATH = BASE_PATH.joinpath("data").resolve()
+
+CONTENT_STYLE = {
+    "margin-left": "1rem",
+    "margin-right": "1rem",
+    "padding": "1rem 1rem",
+}
 
 # Barra de navegación de la aplicación: se define a su hijo como el Logo de Mining Analytics y los elementos de navegación.
 navbar = dbc.NavbarSimple(
@@ -64,32 +70,32 @@ navbar = dbc.NavbarSimple(
 #---------------------------------------------------Definición del layout de la página--------------------------------------------------------#
 
 # Se define el contenido de la página base: a partir de esta se cargan el resto.
-content = html.Div(id="page-content")
+content = html.Div(id="page-content", style=CONTENT_STYLE)
+
 
 # Contenedor principal de la página en un Div, incluye la barra de navegación y el contenido de cada página.
 app.layout = html.Div(
     [dcc.Location(id = "url"), navbar, content]
 )
 
-
 # Definición de callbacks: se ejecutan para mostrar el contenido de la página.
 @app.callback(Output("page-content", "children"), [Input("url", "pathname")])
-def render_page_content(pathname):
+def display_module(pathname):
     if pathname == "/":
         return home.layout
-    if pathname == "/eda":
+    elif pathname == "/eda":
         return eda.layout
     elif pathname == "/pca":
         return pca.layout
     else:
         return html.Div(
-        [
-            html.H1("Error 404: Página no encontrada. :(", className="text-danger"),
-            html.Hr(),
-            html.P(f"La página {pathname} no fue encontrada."),
-        ],
-        className="p-3 bg-light rounded-3",
-    )
+            [
+                html.H1("Error 404: Página no encontrada. :(", className="text-danger"),
+                html.Hr(),
+                html.P(f"La página {pathname} no fue encontrada."),
+            ],
+            className="p-3 bg-light rounded-3",
+        )
 
 # Ejecuta el servidor de Flask al iniciar el script.
 if __name__ == "__main__":
