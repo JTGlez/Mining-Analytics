@@ -129,10 +129,8 @@ eda.layout = html.Div(
                     multiple = True,
                     accept = '.csv'
                 ),
-                html.Div(id = 'output-data-upload'),
-                
 
-                    html.Div(
+                html.Div(
                         children = "O selecciona un dataset predeterminado aquí",
                         style = {
                         'font-family': 'Acumin',
@@ -148,6 +146,12 @@ eda.layout = html.Div(
                     value = dropdown_options[0]['value'],
                     className='my-dropdown'
                     ),
+
+                html.Hr(),
+                html.Div(id = 'output-data-upload'),
+                
+
+                    
 
                 ]),
                     
