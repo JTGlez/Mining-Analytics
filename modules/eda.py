@@ -238,7 +238,8 @@ def eda(df, filename):
 
     categorical_histogram = create_categorical_bar_charts(df)
 
-    grouped_averages_df = grouped_averages(df)
+    categorical_tables = create_categorical_tables(df)
+
 
 
     return html.Div([
@@ -441,17 +442,6 @@ def eda(df, filename):
             className="text-description"
         ),
 
-        html.Div(
-            dcc.Graph(figure=categorical_histogram),
-            className="categorical-histogram"
-        ),
-
-        dash_table.DataTable(
-            data=grouped_averages_df.to_dict('records'),
-            columns=[{'name': i, 'id': i} for i in grouped_averages_df.columns],
-            style_table={'height': '300px', 'overflowX': 'auto'},
-        )
-
     ])
 
 @callback(Output('output-data-upload', 'children'),
@@ -537,11 +527,10 @@ def create_categorical_bar_charts(df):
     figure = go.Figure(data=bar_charts, layout=go.Layout(title='Distribución de variables categóricas', xaxis=dict(title='Categoría'), yaxis=dict(title='Frecuencia'), hovermode='closest'))
     return figure
 
-def grouped_averages(df):
-    grouped_data = []
+def create_categorical_tables(df):
+    tables = []
     for col in df.select_dtypes(include='object'):
         if df[col].nunique() < 10:
-            means = df.groupby(col).mean().reset_index()
-            means['Group'] = col
-            grouped_data.append(means)
-    return pd.concat(grouped_data, axis=0)
+            table_df = df.groupby(col).agg(['mean'])
+            tables.append((col, table_df))
+    return tables
