@@ -8,6 +8,7 @@
 import base64
 import datetime
 import io
+from io import BytesIO
 import dash # Biblioteca principal de Dash.
 from msilib.schema import Component
 from dash import dcc, html, Input, Output, callback# Módulo de Dash para acceder a componentes interactivos y etiquetas de HTML.
@@ -20,21 +21,12 @@ import plotly.graph_objects as go
 import dash_table
 import pandas as pd
 import dash_bootstrap_components as dbc
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
-def create_histogram(df):
-    histograms = []
-    for column in df.select_dtypes(include=['int64', 'float64']).columns:
-        histograms.append(
-            go.Histogram(
-                x=df[column],
-                name=column,
-                opacity=0.75
-            )
-        )
-    return histograms
 
 
 #---------------------------------------------------Definición de funciones para el front--------------------------------------------------------#
@@ -210,16 +202,39 @@ def eda(df, filename):
     dtypes_df = pd.DataFrame(df.dtypes, columns=["Data Type"]).reset_index().rename(columns={"index": "Column"})
     dtypes_df['Data Type'] = dtypes_df['Data Type'].astype(str)  # Convertir los tipos de datos a strings
 
+    # Creamos una visualización serializable para la impresión de la tabla de datos nulos
     nulls_df = pd.DataFrame(df.isnull().sum(), columns=["Null Count"]).reset_index().rename(columns={"index": "Column"})
     nulls_df['Null Count'] = nulls_df['Null Count'].astype(str)
 
-    histograms = create_histogram(df)
-    histogram_graphs = [dcc.Graph(id=f'histogram-{i}', figure={'data': [hist], 'layout': go.Layout(title=f'Distribución de {hist.name}', xaxis=dict(title='Valor'), yaxis=dict(title='Frecuencia'), barmode='overlay', hovermode='closest')}) for i, hist in enumerate(histograms)]
+    dropdown_options = [{'label': column, 'value': column} for column in df.select_dtypes(include=['int64', 'float64']).columns]
+    
 
-    rows = []
-    for i in range(0, len(histogram_graphs), 2):
-        row = dbc.Row([dbc.Col(histogram_graphs[i], width=6), dbc.Col(histogram_graphs[i + 1], width=6)])
-        rows.append(row)
+    dropdown = dcc.Dropdown(
+        id='variable-dropdown',
+        options=dropdown_options,
+        value=dropdown_options[0]['value']
+    
+    )
+
+    dropdown_boxplot = dcc.Dropdown(
+        id='variable-dropdown-box',
+        options=dropdown_options,
+        value=dropdown_options[0]['value']
+    
+    )
+
+    dataframe_store = dcc.Store(id='dataframe-store', data=df.to_dict('records'))
+    histogram_graph = dcc.Graph(id='histogram-graph')
+
+    # Obtener el resumen estadístico
+    describe_df = df.describe().reset_index().rename(columns={"index": "Stat"})
+    describe_df['Stat'] = describe_df['Stat'].astype(str)
+
+    # Obtener el resumen descriptivo
+    describe_categoric_df = df.describe(include = 'object').reset_index().rename(columns={"index": "Stat"})
+    describe_categoric_df['Stat'] = describe_categoric_df['Stat'].astype(str)
+
+    boxplot_graph = dcc.Graph(id='boxplot-graph')
 
     return html.Div([
 
@@ -325,12 +340,96 @@ def eda(df, filename):
         html.H3("Paso 3. Detección de valores atípicos"),
 
         html.Div(
-            children="1) Distribución de variables numéricas: verificamos distribuciones generales de todas las variables numéricas en el dataset. Observa con especial atención a aquellos histogramas con límites demasiados alejados con respecto al grueso del resto de registros.",
+            children="1) Distribución de variables numéricas: selecciona una variable numérica en el menú desplegable para ver su histograma.",
             className="text-description"
         ),
 
-        html.Div(rows)
+        html.Div([dropdown, histogram_graph]),
+        dataframe_store,
 
+         html.Div(
+            children="2) Distribución de variables numéricas: selecciona una variable numérica en el menú desplegable para ver su histograma.",
+            className="text-description"
+        ),
+
+
+        html.Div(
+            dash_table.DataTable(
+                data=describe_df.to_dict('records'),
+                columns=[{'name': i, 'id': i} for i in describe_df.columns],
+                style_cell={
+                    'textAlign': 'left',
+                    'padding': '1em',
+                    'border': '1px solid black',
+                    'borderRadius': '5px'
+                },
+                style_header={
+                    'fontWeight': 'bold',
+                    'backgroundColor': 'rgb(230, 230, 230)',
+                    'border': '1px solid black',
+                    'borderRadius': '5px'
+                },
+                style_data_conditional=[
+                    {
+                        'if': {'column_id': 'Stat'},
+                        'fontWeight': 'bold',
+                        'backgroundColor': 'rgb(248, 248, 248)',
+                        'border': '1px solid black',
+                        'borderRadius': '5px'
+                    }
+                ],
+                style_table={
+                    'height': 'auto',
+                    'overflowX': 'auto'
+                },
+            ),
+            style={'width': '50%', 'margin': '0 auto'}
+        ),
+
+        html.Div(
+            children="3) Diagramas para detectar valores atípicos: selecciona una variable numérica en el menú desplegable para ver su diagrama de caja.",
+            className="text-description"
+        ),
+        html.Div([dropdown_boxplot, boxplot_graph]),
+        dataframe_store,
+
+        html.Div(
+            children="4) Diagramas de variables categóricas: Se refiere a la observación de las clases de cada columna (variable) y su frecuencia. ",
+            className="text-description"
+        ),
+
+        html.Div(
+            dash_table.DataTable(
+                data=describe_categoric_df.to_dict('records'),
+                columns=[{'name': i, 'id': i} for i in describe_categoric_df.columns],
+                style_cell={
+                    'textAlign': 'left',
+                    'padding': '1em',
+                    'border': '1px solid black',
+                    'borderRadius': '5px'
+                },
+                style_header={
+                    'fontWeight': 'bold',
+                    'backgroundColor': 'rgb(230, 230, 230)',
+                    'border': '1px solid black',
+                    'borderRadius': '5px'
+                },
+                style_data_conditional=[
+                    {
+                        'if': {'column_id': 'Stat'},
+                        'fontWeight': 'bold',
+                        'backgroundColor': 'rgb(248, 248, 248)',
+                        'border': '1px solid black',
+                        'borderRadius': '5px'
+                    }
+                ],
+                style_table={
+                    'height': 'auto',
+                    'overflowX': 'auto'
+                },
+            ),
+            style={'width': '50%', 'margin': '0 auto'}
+        ),
     ])
 
 @callback(Output('output-data-upload', 'children'),
@@ -351,3 +450,54 @@ def update_output(list_of_contents, selected_file, list_of_names, list_of_dates)
     elif ctx.triggered[0]['prop_id'] == 'upload-data-static.value':
         df = pd.read_csv(selected_file)
         return eda(df, selected_file)
+
+@callback(
+    Output('histogram-graph', 'figure'),
+    Input('variable-dropdown', 'value'),
+    Input('dataframe-store', 'data')
+)
+def update_histogram(selected_variable, stored_data):
+    df = pd.DataFrame(stored_data)
+
+    hist = go.Histogram(
+        x=df[selected_variable],
+        name=selected_variable,
+        opacity=0.5,
+    )
+    figure = {
+        'data': [hist],
+        'layout': go.Layout(
+            title=f'Distribución de {selected_variable}',
+            xaxis=dict(title='Valor'),
+            yaxis=dict(title='Frecuencia'),
+            barmode='overlay',
+            hovermode='closest'
+        )
+    }
+    return figure
+
+def create_boxplot_figure(column, df):
+    box = go.Box(
+        x=df[column],
+        name=column,
+        marker=dict(color='rgb(0, 128, 128)'),
+        boxmean=True
+    )
+    layout = go.Layout(
+        title=f'Diagrama de caja para {column}',
+        yaxis=dict(title=column),
+        xaxis=dict(title='Distribución'),
+        hovermode='closest'
+    )
+    return go.Figure(data=[box], layout=layout)
+
+
+@callback(
+    Output('boxplot-graph', 'figure'),
+    Input('variable-dropdown-box', 'value'),
+    Input('dataframe-store', 'data')
+)
+def update_boxplot(selected_variable, stored_data):
+    df = pd.DataFrame(stored_data)
+    figure = create_boxplot_figure(selected_variable, df)
+    return figure

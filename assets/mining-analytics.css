@@ -112,6 +112,12 @@ H5, H3 {
     margin: auto;
 }
 
+/*Borde para los contenedores de las tablas generadas */
+.dash-table-container{
+    position: relative;
+    border: 1px solid black;
+}
+
 /*
   ##Diseño responsive: para mòviles (iPad, Android, Surface)
   */
