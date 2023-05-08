@@ -289,6 +289,11 @@ def eda(df, filename):
                     'backgroundColor': 'rgb(230, 230, 230)',
                     'border': '1px solid black'
                 },
+                style_table={
+                    'height': '400px',
+                    'overflowY': 'auto',
+                    'backgroundColor': 'rgb(230, 230, 230)'
+                },
                 style_data_conditional=[
                     {
                         'if': {'column_id': 'Column'},
@@ -320,6 +325,11 @@ def eda(df, filename):
                     'fontWeight': 'bold',
                     'backgroundColor': 'rgb(230, 230, 230)',
                     'border': '1px solid black'
+                },
+                style_table={
+                    'height': '400px',
+                    'overflowY': 'auto',
+                    'backgroundColor': 'rgb(230, 230, 230)'
                 },
                 style_data_conditional=[
                     {
