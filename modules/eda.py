@@ -187,6 +187,13 @@ def parse_contents(contents, filename, date):
 
 
 def eda(df, filename):
+    """
+    retorna: realiza un Análisis Exploratorio de Datos con el dataset que recibe de acuerdo al procedimiento del curso de Minería de Datos.
+    1. Descripción de la estructura del dataset
+    2. Identificación de valores nulos.
+    3. Identificación de outliers
+    4. Análisis correlativo entre pares variables
+    """
     return html.Div([
 
         dbc.Alert('El archivo cargado es: {}'.format(filename), color="success"),
