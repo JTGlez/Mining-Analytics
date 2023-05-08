@@ -118,6 +118,14 @@ H5, H3 {
     border: 1px solid black;
 }
 
+/* Animación para las Cards */
+.card:hover{
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+    transform: translateY(-2px);
+    transition: all 0.3s ease;
+    background-color: #f2f2f2;
+}
+
 /*
   ##Diseño responsive: para mòviles (iPad, Android, Surface)
   */

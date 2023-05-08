@@ -1,5 +1,5 @@
 # Mining Analytics: Proyecto final de la asignatura de Minería de Datos
-# Autores: 
+# Autores:
 # Téllez González Jorge Luis
 # Cruz Rangel Leonardo Said
 # Módulo: Análisis Exploratorio de Datos
@@ -46,7 +46,7 @@ def eda_card():
             html.H5("Mining Analytics"), # Título de página.
             html.H3("Análisis Exploratorio de Datos"), # Subtítulo.
             # Texto que explica la temática de la página web.
-            html.Div( 
+            html.Div(
                 id="intro",
                 children="El análisis exploratorio de datos (AED) es una técnica utilizada en estadística y ciencias de la computación para analizar y resumir conjuntos de datos. El objetivo del AED es descubrir patrones, identificar valores atípicos y comprender las relaciones entre las variables. En lugar de simplemente calcular estadísticas descriptivas básicas, el AED implica una exploración más profunda de los datos para descubrir información oculta."
                 ,
@@ -60,12 +60,12 @@ def eda_card():
             # Muestra una figura de exploración (GIF de lupa)
             html.Div(
                 style={'display': 'flex', 'align-items': 'center', 'justify-content': 'center', 'height': '20em'},
-                children=[        
-                    html.Img(            
-                        id="eda",            
+                children=[
+                    html.Img(
+                        id="eda",
                         src="/assets/eda.gif",
                         style = {'width': '25em', 'height': '15em'}
-                    )    
+                    )
                 ]
             ),
 
@@ -153,12 +153,7 @@ eda.layout = html.Div(
 
                 html.Hr(),
                 html.Div(id = 'output-data-upload'),
-                
-
-                    
-
                 ]),
-                    
                 ),
                 #html.Div(id = 'output-dataset-upload'),
             ],
@@ -207,20 +202,17 @@ def eda(df, filename):
     nulls_df['Null Count'] = nulls_df['Null Count'].astype(str)
 
     dropdown_options = [{'label': column, 'value': column} for column in df.select_dtypes(include=['int64', 'float64']).columns]
-    
 
     dropdown = dcc.Dropdown(
         id='variable-dropdown',
         options=dropdown_options,
         value=dropdown_options[0]['value']
-    
     )
 
     dropdown_boxplot = dcc.Dropdown(
         id='variable-dropdown-box',
         options=dropdown_options,
         value=dropdown_options[0]['value']
-    
     )
 
     dataframe_store = dcc.Store(id='dataframe-store', data=df.to_dict('records'))
@@ -259,7 +251,7 @@ def eda(df, filename):
             style_table={'height': '300px', 'overflowX': 'auto'},
         ),
         
-        html.Hr(),  # Línea horizontal  
+        html.Hr(),  # Línea horizontal
 
         html.H3("Paso 1. Descripción de la estructura de los datos"),
 
@@ -351,7 +343,7 @@ def eda(df, filename):
         html.Div([dropdown, histogram_graph]),
         dataframe_store,
 
-         html.Div(
+        html.Div(
             children="2) Distribución de variables numéricas: selecciona una variable numérica en el menú desplegable para ver su histograma.",
             className="text-description"
         ),
