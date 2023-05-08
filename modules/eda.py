@@ -190,10 +190,14 @@ def eda(df, filename):
     """
     retorna: realiza un Análisis Exploratorio de Datos con el dataset que recibe de acuerdo al procedimiento del curso de Minería de Datos.
     1. Descripción de la estructura del dataset
-    2. Identificación de valores nulos.
+    2. Identificación de datos faltantes
     3. Identificación de outliers
     4. Análisis correlativo entre pares variables
     """
+    # Crear el DataFrame con los tipos de datos, serializando la salida para su visualización como JSON
+    dtypes_df = pd.DataFrame(df.dtypes, columns=["Data Type"]).reset_index().rename(columns={"index": "Column"})
+    dtypes_df['Data Type'] = dtypes_df['Data Type'].astype(str)  # Convertir los tipos de datos a strings
+
     return html.Div([
 
         dbc.Alert('El archivo cargado es: {}'.format(filename), color="success"),
@@ -213,7 +217,62 @@ def eda(df, filename):
             style_table={'height': '300px', 'overflowX': 'auto'},
         ),
         
-        html.Hr()  # horizontal line      
+        html.Hr(),  # Línea horizontal  
+
+        html.H3("Paso 1. Descripción de la estructura de los datos"),
+
+        html.Div(
+            children = "1) Dimensión del DataFrame: verificamos la estructura general de los datos observando la cantidad de filas y columnas en el dataset a explorar.", className = "text-description"
+        ),
+
+        dbc.Row([
+            dbc.Col([
+                dbc.Alert("Número de filas: {}".format(df.shape[0]))
+            ], width=3),  # Ajusta el ancho de la columna
+
+            dbc.Col([
+                dbc.Alert("Número de columnas: {}".format(df.shape[1]))
+            ], width=3),
+        ],
+            justify='center'  # Añade la propiedad justify con el valor 'center'
+        ),
+
+        html.Div(
+            children = "2) Tipos de datos: a continuación se muestran los tipos de datos detectados para el dataset a analizar.", className = "text-description"
+        ),
+
+        html.Div(
+
+            dash_table.DataTable(
+            data=dtypes_df.to_dict('records'),
+            columns=[{'name': i, 'id': i} for i in dtypes_df.columns],
+                style_cell={
+                    'textAlign': 'left',
+                    'padding': '1em'
+                },
+                style_header={
+                    'fontWeight': 'bold',
+                    'backgroundColor': 'rgb(230, 230, 230)',
+                    'border': '1px solid black'
+                },
+                style_data_conditional=[
+                    {
+                        'if': {'column_id': 'Column'},
+                        'fontWeight': 'bold',
+                        'backgroundColor': 'rgb(248, 248, 248)',
+                        'border': '1px solid black'
+                    }
+                ]
+            ),
+            style={'width': '50%', 'margin': '0 auto'}
+        ),
+
+        html.H3("Paso 2. Identificación de datos faltantes"),
+
+        html.Div(
+            children = "2) Tipos de datos: a continuación se muestran los tipos de datos detectados para el dataset a analizar.", className = "text-description"
+        ),
+
     ])
 
 @callback(Output('output-data-upload', 'children'),
