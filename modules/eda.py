@@ -236,6 +236,11 @@ def eda(df, filename):
 
     boxplot_graph = dcc.Graph(id='boxplot-graph')
 
+    categorical_histogram = create_categorical_bar_charts(df)
+
+    grouped_averages_df = grouped_averages(df)
+
+
     return html.Div([
 
         dbc.Alert('El archivo cargado es: {}'.format(filename), color="success"),
@@ -430,6 +435,23 @@ def eda(df, filename):
             ),
             style={'width': '50%', 'margin': '0 auto'}
         ),
+
+        html.Div(
+            children="Histogramas de variables categóricas:",
+            className="text-description"
+        ),
+
+        html.Div(
+            dcc.Graph(figure=categorical_histogram),
+            className="categorical-histogram"
+        ),
+
+        dash_table.DataTable(
+            data=grouped_averages_df.to_dict('records'),
+            columns=[{'name': i, 'id': i} for i in grouped_averages_df.columns],
+            style_table={'height': '300px', 'overflowX': 'auto'},
+        )
+
     ])
 
 @callback(Output('output-data-upload', 'children'),
@@ -501,3 +523,25 @@ def update_boxplot(selected_variable, stored_data):
     df = pd.DataFrame(stored_data)
     figure = create_boxplot_figure(selected_variable, df)
     return figure
+
+
+def create_categorical_bar_charts(df):
+    categorical_columns = df.select_dtypes(include='object').columns
+    bar_charts = []
+    for col in categorical_columns:
+        if df[col].nunique() < 10:
+            counts = df[col].value_counts()
+            bar_chart = go.Bar(x=counts.index, y=counts.values, name=col)
+            bar_charts.append(bar_chart)
+    # Crear un objeto go.Figure con las gráficas de barras y un diseño personalizado
+    figure = go.Figure(data=bar_charts, layout=go.Layout(title='Distribución de variables categóricas', xaxis=dict(title='Categoría'), yaxis=dict(title='Frecuencia'), hovermode='closest'))
+    return figure
+
+def grouped_averages(df):
+    grouped_data = []
+    for col in df.select_dtypes(include='object'):
+        if df[col].nunique() < 10:
+            means = df.groupby(col).mean().reset_index()
+            means['Group'] = col
+            grouped_data.append(means)
+    return pd.concat(grouped_data, axis=0)
