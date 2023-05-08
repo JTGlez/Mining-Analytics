@@ -24,6 +24,18 @@ import dash_bootstrap_components as dbc
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
+def create_histogram(df):
+    histograms = []
+    for column in df.select_dtypes(include=['int64', 'float64']).columns:
+        histograms.append(
+            go.Histogram(
+                x=df[column],
+                name=column,
+                opacity=0.75
+            )
+        )
+    return histograms
+
 
 #---------------------------------------------------Definición de funciones para el front--------------------------------------------------------#
 def eda_card():
@@ -198,6 +210,17 @@ def eda(df, filename):
     dtypes_df = pd.DataFrame(df.dtypes, columns=["Data Type"]).reset_index().rename(columns={"index": "Column"})
     dtypes_df['Data Type'] = dtypes_df['Data Type'].astype(str)  # Convertir los tipos de datos a strings
 
+    nulls_df = pd.DataFrame(df.isnull().sum(), columns=["Null Count"]).reset_index().rename(columns={"index": "Column"})
+    nulls_df['Null Count'] = nulls_df['Null Count'].astype(str)
+
+    histograms = create_histogram(df)
+    histogram_graphs = [dcc.Graph(id=f'histogram-{i}', figure={'data': [hist], 'layout': go.Layout(title=f'Distribución de {hist.name}', xaxis=dict(title='Valor'), yaxis=dict(title='Frecuencia'), barmode='overlay', hovermode='closest')}) for i, hist in enumerate(histograms)]
+
+    rows = []
+    for i in range(0, len(histogram_graphs), 2):
+        row = dbc.Row([dbc.Col(histogram_graphs[i], width=6), dbc.Col(histogram_graphs[i + 1], width=6)])
+        rows.append(row)
+
     return html.Div([
 
         dbc.Alert('El archivo cargado es: {}'.format(filename), color="success"),
@@ -270,8 +293,43 @@ def eda(df, filename):
         html.H3("Paso 2. Identificación de datos faltantes"),
 
         html.Div(
-            children = "2) Tipos de datos: a continuación se muestran los tipos de datos detectados para el dataset a analizar.", className = "text-description"
+            children = "A continuación se muestran los valores nulos detectados por cada variable en el dataset:", className = "text-description"
         ),
+
+        html.Div(
+
+            dash_table.DataTable(
+            data=nulls_df.to_dict('records'),
+            columns=[{'name': i, 'id': i} for i in nulls_df.columns],
+                style_cell={
+                    'textAlign': 'left',
+                    'padding': '1em'
+                },
+                style_header={
+                    'fontWeight': 'bold',
+                    'backgroundColor': 'rgb(230, 230, 230)',
+                    'border': '1px solid black'
+                },
+                style_data_conditional=[
+                    {
+                        'if': {'column_id': 'Column'},
+                        'fontWeight': 'bold',
+                        'backgroundColor': 'rgb(248, 248, 248)',
+                        'border': '1px solid black'
+                    }
+                ]
+            ),
+            style={'width': '50%', 'margin': '0 auto'}
+        ),
+
+        html.H3("Paso 3. Detección de valores atípicos"),
+
+        html.Div(
+            children="1) Distribución de variables numéricas: verificamos distribuciones generales de todas las variables numéricas en el dataset. Observa con especial atención a aquellos histogramas con límites demasiados alejados con respecto al grueso del resto de registros.",
+            className="text-description"
+        ),
+
+        html.Div(rows)
 
     ])
 
