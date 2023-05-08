@@ -238,8 +238,6 @@ def eda(df, filename):
 
     categorical_histogram = create_categorical_bar_charts(df)
 
-    categorical_tables = create_categorical_tables(df)
-
 
 
     return html.Div([
@@ -442,6 +440,12 @@ def eda(df, filename):
             className="text-description"
         ),
 
+        html.Div(
+            dcc.Graph(figure=categorical_histogram),
+            className="categorical-histogram"
+        ),
+
+
     ])
 
 @callback(Output('output-data-upload', 'children'),
@@ -526,6 +530,7 @@ def create_categorical_bar_charts(df):
     # Crear un objeto go.Figure con las gráficas de barras y un diseño personalizado
     figure = go.Figure(data=bar_charts, layout=go.Layout(title='Distribución de variables categóricas', xaxis=dict(title='Categoría'), yaxis=dict(title='Frecuencia'), hovermode='closest'))
     return figure
+
 
 def create_categorical_tables(df):
     tables = []
