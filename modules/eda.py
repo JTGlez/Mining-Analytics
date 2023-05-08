@@ -445,6 +445,11 @@ def eda(df, filename):
             className="categorical-histogram"
         ),
 
+        html.Div(
+            children="5) Agrupar por tipos de clases, por ejemplo, con propiedades tipo h. Se muestran específicamente promedios de cada tipo.",
+            className="text-description"
+        ),
+
 
     ])
 
