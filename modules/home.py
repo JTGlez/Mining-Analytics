@@ -74,7 +74,7 @@ eda_card = dbc.Card(
                 [
                     html.H4("Análisis Exploratorio de Datos (EDA)", className="card-title"),
                     html.P(
-                        "Los científicos de datos utilizan el Análisis Exploratorio de Datos (EDA) para analizar e investigar conjuntos de datos y resumir sus principales características, a menudo empleando métodos de visualización de datos. Se hace un análisis descriptivo, viendo qué tipos de datos hay, si hay valores nulos, datos atípicos, y se hace un Análisis Correlacional de Datos, para ver si hay correlación entre las variables.",
+                        "El análisis exploratorio de datos es una técnica de análisis de datos que se utiliza para examinar y resumir las características principales de un conjunto de datos con el fin de obtener una comprensión inicial de los mismos.",
                         className="card-text",
                     ),
                 ]
@@ -98,7 +98,7 @@ pca_card = dbc.Card(
                 [
                     html.H4("Análisis de Componentes Principales (PCA)", className="card-title"),
                     html.P(
-                        "El análisis de componentes principales (ACP o PCA, Principal Component Analysis) es un algoritmo para reducir la cantidad de variables de conjuntos de datos, mientras se conserva la mayor cantidad de información posible.",
+                        "El análisis de componentes principales es una técnica estadística utilizada para reducir la dimensionalidad de un conjunto de datos mediante la identificación de las variables más importantes y la creación de nuevas variables que expliquen la mayor variabilidad posible en los datos.",
                         className="card-text",
                     ),
                 ]
