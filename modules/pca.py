@@ -23,6 +23,7 @@ import pandas as pd
 import dash_bootstrap_components as dbc
 import seaborn as sns
 import matplotlib.pyplot as plt
+import numpy as np
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
@@ -193,7 +194,7 @@ def parse_contents(contents, filename, date):
             id='matriz',
             figure={
                 'data': [
-                    {'x': df.corr().columns, 'y': df.corr().columns, 'z': df.corr().values, 'type': 'heatmap', 'colorscale': 'RdBu'}
+                    {'x': df.corr().columns, 'y': df.corr().columns, 'z': np.triu(df.corr().values, k=1), 'type': 'heatmap', 'colorscale': 'RdBu', 'symmetric': False}
                 ],
                 'layout': {
                     'title': 'Matriz de correlación',
@@ -209,10 +210,25 @@ def parse_contents(contents, filename, date):
                             font=dict(
                                 color='white' if abs(df.corr().values[i][j]) >= 0.67  else 'black'
                             ),
-                        ) for i in range(len(df.corr().columns)) for j in range(len(df.corr().columns))
+                        ) for i in range(len(df.corr().columns)) for j in range(i)
                     ],
                 },
             },
+        ),
+        html.Div(
+            children=[
+                dbc.Badge(
+                    "Identificación de correlaciones",
+                    pill=True,
+                    color="primary",
+                    style={"font-size":"15px"}
+                ),
+                html.P("🔴 Correlación fuerte: De -1.0 a -0.67 y 0.67 a 1.0", className="ms-4"),
+                html.P("🟡 Correlación moderada: De -0.66 a -0.34 y 0.34 a 0.66", className="ms-4"),
+                html.P("🔵 Correlación débil: De -0.33 a 0.0 y 0.0 a 0.33", className="ms-4"),
+                dbc.Alert("ⓘ Si no se identifica almenos una correlación fuerte, entonces PCA no aplica.", color="warning"),
+            ],
+            className="mt-3"
         ),
         html.H3(
             "Cálculo de Componentes Principales"
@@ -224,14 +240,18 @@ def parse_contents(contents, filename, date):
                         dbc.Col(
                             [
                                 dbc.Row(
-                                    dbc.Badge("ⓘ Método de Estandarización", color="primary",
-                                        id="tooltip-method", style={"cursor":"pointer", "display": "flex", "align-items": "center", "justify-content": "center", "height": "100%"}
-                                        ),
-                                    #dbc.Tooltip(
-                                    #    "Selecciona un método de estandarización.",
-                                    #    target="tooltip-method"
-                                    #),
-                                    style={"height":"50px"}
+                                    html.Div(
+                                        [
+                                            dbc.Badge("ⓘ Método de  Estandarización", color="primary",
+                                            id="tooltip-method", style={"cursor":"pointer", "display": "flex", "align-items": "center", "justify-content": "center", "height": "100%"},
+                                            ),
+                                            dbc.Tooltip(
+                                                "Selecciona un método de    estandarización.",
+                                                target="tooltip-method"
+                                            ),
+                                        ],
+                                        style={"height":"50px", "padding": "0"},
+                                    ),
                                 ),
                                 dbc.Row(
                                     dbc.Select(
@@ -251,14 +271,18 @@ def parse_contents(contents, filename, date):
                         dbc.Col(
                             [
                                 dbc.Row(
-                                    dbc.Badge("ⓘ Núm. Componentes principales", color="primary",
-                                        id="tooltip-numpc", style={"cursor":"pointer", "display": "flex", "align-items": "center", "justify-content": "center", "height": "100%"}
-                                        ),
-                                    #dbc.Tooltip(
-                                    #    "Elige la cantidad de componentes que quieras tomar en cuenta para el cálculo.",
-                                    #    target="tooltip-numpc"
-                                    #),
-                                    style={"height":"50px"}
+                                    html.Div(
+                                        [
+                                            dbc.Badge("ⓘ Núm. Componentes principales", color="primary",
+                                                id="tooltip-numpc", style={"cursor":"pointer", "display": "flex", "align-items": "center", "justify-content": "center", "height": "100%"}
+                                            ),
+                                            dbc.Tooltip(
+                                                "Elige la cantidad de componentes que quieras tomar en cuenta para el cálculo.",
+                                                target="tooltip-numpc"
+                                            ),
+                                        ],
+                                        style={"height":"50px", "padding": "0"},
+                                    ),
                                 ),
                                 dbc.Row(
                                     dbc.Input(
