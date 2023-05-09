@@ -48,24 +48,41 @@ def pca_card():
             # Texto que explica la temática de la página web.
             html.Div(
                 id="intro",
-                children="El análisis de componentes principales (ACP) es una técnica de reducción de la dimensionalidad que se utiliza para identificar patrones y estructuras en datos multivariados. Esto significa que nos permite resumir una gran cantidad de información en unas pocas dimensiones, manteniendo la mayor cantidad posible de la varianza original de los datos.",
+                children=
+                [
+                    html.P("El análisis de componentes principales (ACP) es una técnica de reducción de la dimensionalidad que se utiliza para identificar patrones y estructuras en datos multivariados. Esto significa que nos permite resumir una gran cantidad de información en unas pocas dimensiones, manteniendo la mayor cantidad posible de la varianza original de los datos."),
+                    html.P("Para calcular los componentes principales se sigue el siguiente procedimiento:"),
+                ],
+            ),
+            # Imagen PCA
+            html.Div(
+                style={'display': 'flex', 'align-items': 'center', 'justify-content': 'center'},
+                children=[
+                    html.Img(
+                        id="pca-img",
+                        src="/assets/pca.jpg",
+                        style = {'width': '100%', 'height': '100%'}
+                    )
+                ]
             ),
             # Texto secundario de explicacion.
             html.Div(
                 id="intro2",
-                children = "En esta sección podrás llevar a cabo este procedimiento de forma automatizada cargando uno de los datasets de prueba, o bien, cargando tu propio dataset."
+                children = "En esta sección podrás llevar a cabo este procedimiento de forma automatizada cargando uno de los datasets de prueba, o bien, cargando tu propio dataset.",
+                className="mb-4"
             ),
 
             # Muestra una figura de exploración (GIF de lupa)
             html.Div(
-                style={'display': 'flex', 'align-items': 'center', 'justify-content': 'center', 'height': '20em'},
+                style={'display': 'flex', 'align-items': 'center', 'justify-content': 'center'},
                 children=[
                     html.Img(
                         id="pca",
-                        src="https://miro.medium.com/v2/resize:fit:640/1*foB2cfjPCgHVnSyon293pQ.gif",
-                        style = {'width': '25em', 'height': '15em'}
-                    )
-                ]
+                        src="https://matthewdeakos.me/wp-content/uploads/2018/02/ezgif.com-crop-4.gif",
+                        style = {'width': '50%', 'height': '50%'},
+                        className="mb-4"
+                    ),
+                ],
             ),
         ],
 
@@ -156,17 +173,138 @@ def parse_contents(contents, filename, date):
         dash_table.DataTable(
             data=df.to_dict('records'),
             page_size=8,
-            filter_action='native',
             sort_action='native',
             sort_mode='multi',
             column_selectable='single',
-            row_deletable=True,
+            row_deletable=False,
             cell_selectable=True,
-            editable=True,
+            editable=False,
             row_selectable='multi',
-            columns=[{'name': i, 'id': i, "deletable":True} for i in df.columns],
+            columns=[{'name': i, 'id': i, "deletable":False} for i in df.columns],
             style_table={'height': '300px', 'overflowX': 'auto'},
         ),
+        dbc.Alert('Variables numéricas: {}'.format(df.select_dtypes(include='number').shape[1]), color="info", class_name="my-3 mx-auto text-center w-25"),
+
+        html.H3(
+            "Evidencia de datos correlacionados"
+        ),
+
+        dcc.Graph(
+            id='matriz',
+            figure={
+                'data': [
+                    {'x': df.corr().columns, 'y': df.corr().columns, 'z': df.corr().values, 'type': 'heatmap', 'colorscale': 'RdBu'}
+                ],
+                'layout': {
+                    'title': 'Matriz de correlación',
+                    'xaxis': {'side': 'down'},
+                    'yaxis': {'side': 'left'},
+                    # Agregamos el valor de correlación por en cada celda (text_auto = True)
+                    'annotations': [
+                        dict(
+                            x=df.corr().columns[i],
+                            y=df.corr().columns[j],
+                            text=str(round(df.corr().values[i][j], 4)),
+                            showarrow=False,
+                            font=dict(
+                                color='white' if abs(df.corr().values[i][j]) >= 0.67  else 'black'
+                            ),
+                        ) for i in range(len(df.corr().columns)) for j in range(len(df.corr().columns))
+                    ],
+                },
+            },
+        ),
+        html.H3(
+            "Cálculo de Componentes Principales"
+        ),
+        html.Div(
+            children=[
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            [
+                                dbc.Row(
+                                    dbc.Badge("ⓘ Método de Estandarización", color="primary",
+                                        id="tooltip-method", style={"cursor":"pointer", "display": "flex", "align-items": "center", "justify-content": "center", "height": "100%"}
+                                        ),
+                                    #dbc.Tooltip(
+                                    #    "Selecciona un método de estandarización.",
+                                    #    target="tooltip-method"
+                                    #),
+                                    style={"height":"50px"}
+                                ),
+                                dbc.Row(
+                                    dbc.Select(
+                                        id='select-escale',
+                                        options=[
+                                            {'label': 'StandardScaler', 'value': "StandardScaler()"},
+                                            {'label': 'MinMaxScaler', 'value': "MinMaxScaler()"},
+                                        ],
+                                        value="StandardScaler()",
+                                        style={"font-size": "medium"}
+                                    ),
+                                    style={"height":"50px"}
+                                ),
+                            ],
+                            class_name="me-3"
+                        ),
+                        dbc.Col(
+                            [
+                                dbc.Row(
+                                    dbc.Badge("ⓘ Núm. Componentes principales", color="primary",
+                                        id="tooltip-numpc", style={"cursor":"pointer", "display": "flex", "align-items": "center", "justify-content": "center", "height": "100%"}
+                                        ),
+                                    #dbc.Tooltip(
+                                    #    "Elige la cantidad de componentes que quieras tomar en cuenta para el cálculo.",
+                                    #    target="tooltip-numpc"
+                                    #),
+                                    style={"height":"50px"}
+                                ),
+                                dbc.Row(
+                                    dbc.Input(
+                                        id='n_components',
+                                        type='number',
+                                        placeholder='None',
+                                        value=None,
+                                        min=1,
+                                        max=df.select_dtypes(include='number').shape[1],
+                                        style={"font-size": "medium"}
+                                    ),
+                                    style={"height":"50px"}
+                                ),
+                            ],
+                            class_name="me-3"
+                        ),
+                        dbc.Col(
+                            [
+                                dbc.Row(
+                                    dbc.Badge("ⓘ Porcentaje de Relevancia", color="primary",
+                                        id="tooltip-method", style={"cursor":"pointer", "display": "flex", "align-items": "center", "justify-content": "center", "height": "100%"}
+                                        ),
+                                    style={"height":"50px"}
+                                ),
+                                dbc.Row(
+                                    dbc.Input(
+                                        id='relevancia',
+                                        type='number',
+                                        placeholder='None',
+                                        value=0.9,
+                                        min=0.75,
+                                        max=0.9,
+                                        style={"font-size": "medium"}
+                                    ),
+                                ),
+                            ],
+                            class_name="me-3"
+                        ),
+                    ],
+                    style={"justify-content": "between", "height": "100%"}
+                ),
+            ],
+            style={"font-size":"20px"},
+            className="mt-4",
+        ),
+
     ])
 
 @callback(Output('output-data-upload-pca', 'children'),
