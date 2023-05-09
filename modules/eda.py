@@ -162,8 +162,6 @@ eda.layout = html.Div(
 )
 
 
-
-
 def parse_contents(contents, filename, date):
 
     content_type, content_string = contents.split(',')
@@ -230,7 +228,7 @@ def eda(df, filename):
 
     categorical_histogram = create_categorical_bar_charts(df)
 
-
+    heatmap = create_correlation_heatmap(df)
 
     return html.Div([
 
@@ -481,7 +479,19 @@ def eda(df, filename):
                 )
             ], style={"overflowX": "auto", "width": "100%"})  # Agrega desplazamiento horizontal
             for i, df in enumerate(create_categorical_tables(df))
-        ], style={"display": "flex", "flex-wrap": "wrap", "width": "50%", "margin": "0 auto"})
+        ], style={"display": "flex", "flex-wrap": "wrap", "width": "50%", "margin": "0 auto"}),
+
+        html.H3("Paso 5. Identificación de relaciones entre pares variables"),
+
+        html.Div(
+            children="1) Una matriz de correlaciones es útil para analizar la relación entre las variables numéricas. Se emplea la función corr()",
+            className="text-description"
+        ),
+
+        dcc.Graph(
+            id='heatmap',
+            figure=heatmap,
+        )
 
     ])
 
@@ -580,5 +590,15 @@ def create_categorical_tables(df):
             data_frames.append(table_df)
 
     return data_frames
+
+def create_correlation_heatmap(df):
+    corr_matrix = df.corr()
+    # Crear la gráfica de heatmap utilizando Plotly Express
+    fig = px.imshow(corr_matrix,
+                    labels=dict(x="Variables", y="Variables", color="Correlación"),
+                    x=corr_matrix.columns,
+                    y=corr_matrix.columns,
+                    color_continuous_scale='RdBu_r')
+    return fig
 
 
