@@ -460,7 +460,7 @@ def eda(df, filename):
                     id=f'categorical-table-{i}',
                     columns=[{"name": col, "id": col} for col in df.columns],
                     data=df.to_dict("records"),
-                    style_cell={"textAlign": "left"},
+                    style_cell={"textAlign": "left", "padding": "1em 1em 1em 1em"},
                     style_header={
                         "backgroundColor": "royalblue",
                         "color": "white",
@@ -481,7 +481,7 @@ def eda(df, filename):
                 )
             ], style={"overflowX": "auto", "width": "100%"})  # Agrega desplazamiento horizontal
             for i, df in enumerate(create_categorical_tables(df))
-        ], style={"display": "flex", "flex-wrap": "wrap"})
+        ], style={"display": "flex", "flex-wrap": "wrap", "width": "50%", "margin": "0 auto"})
 
     ])
 
