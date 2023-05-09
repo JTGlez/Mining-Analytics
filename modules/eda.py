@@ -453,6 +453,36 @@ def eda(df, filename):
         ),
 
 
+
+        html.Div([
+            html.Div([
+                dash_table.DataTable(
+                    id=f'categorical-table-{i}',
+                    columns=[{"name": col, "id": col} for col in df.columns],
+                    data=df.to_dict("records"),
+                    style_cell={"textAlign": "left"},
+                    style_header={
+                        "backgroundColor": "royalblue",
+                        "color": "white",
+                        "textAlign": "left"
+                    },
+                    style_data_conditional=[
+                        {
+                            "if": {"row_index": "odd"},
+                            "backgroundColor": "white"
+                        },
+                        {
+                            "if": {"row_index": "even"},
+                            "backgroundColor": "paleturquoise"
+                        }
+                    ],
+                    css=[{"selector": ".dash-spreadsheet", "rule": "table-layout: auto"}],
+                    fill_width=False  # Desactiva el ajuste automático del ancho de las columnas
+                )
+            ], style={"overflowX": "auto", "width": "100%"})  # Agrega desplazamiento horizontal
+            for i, df in enumerate(create_categorical_tables(df))
+        ], style={"display": "flex", "flex-wrap": "wrap"})
+
     ])
 
 @callback(Output('output-data-upload', 'children'),
@@ -538,11 +568,17 @@ def create_categorical_bar_charts(df):
     figure = go.Figure(data=bar_charts, layout=go.Layout(title='Distribución de variables categóricas', xaxis=dict(title='Categoría'), yaxis=dict(title='Frecuencia'), hovermode='closest'))
     return figure
 
-
 def create_categorical_tables(df):
-    tables = []
+    data_frames = []
+
     for col in df.select_dtypes(include='object'):
         if df[col].nunique() < 10:
-            table_df = df.groupby(col).agg(['mean'])
-            tables.append((col, table_df))
-    return tables
+            table_df = df.groupby(col).mean().reset_index()
+            col_values = table_df[col].copy()  # Copia los valores de la columna categórica
+            table_df = table_df.drop(columns=[col])  # Elimina la columna categórica
+            table_df.insert(0, col, col_values)  # Inserta la columna categórica al principio del DataFrame
+            data_frames.append(table_df)
+
+    return data_frames
+
+
