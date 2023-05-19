@@ -14,7 +14,7 @@ from msilib.schema import Component
 from dash import dcc, html, Input, Output, callback# Módulo de Dash para acceder a componentes interactivos y etiquetas de HTML.
 from dash.dependencies import Input, Output, State # Dependencias de Dash para la implementación de Callbacks.
 import dash_bootstrap_components as dbc # Biblioteca de componentes de Bootstrap en Dash para el Front-End responsive.
-from modules import home, eda, pca
+from modules import home, eda, pca, regtree, classtree, regforest, classforest
 import pathlib
 import plotly.express as px
 import plotly.graph_objects as go
