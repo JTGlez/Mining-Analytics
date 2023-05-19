@@ -9,7 +9,7 @@ import dash # Biblioteca principal de Dash.
 from dash import dcc, html, Input, Output, callback # Módulo de Dash para acceder a componentes interactivos y etiquetas de HTML.
 from dash.dependencies import Input, Output, State # Dependencias de Dash para la implementación de Callbacks.
 import dash_bootstrap_components as dbc # Biblioteca de componentes de Bootstrap en Dash para el Front-End responsive.
-from modules import home, eda, pca
+from modules import home, eda, pca, regtree, classtree, regforest, classforest
 import pathlib
 
 
@@ -60,6 +60,24 @@ navbar = dbc.NavbarSimple(
                 style={"whiteSpace": "nowrap"},
             )
         ),
+        dbc.DropdownMenu(
+            children=[
+                dbc.DropdownMenuItem("Clasificación", href="/classtree"),
+                dbc.DropdownMenuItem("Regresión", href="/regtree"),
+            ],
+            nav=True,
+            in_navbar=True,
+            label="Árboles de Decisión",
+        ),
+        dbc.DropdownMenu(
+            children=[
+                dbc.DropdownMenuItem("Clasificación", href="/classforest"),
+                dbc.DropdownMenuItem("Regresión", href="/regforest"),
+            ],
+            nav=True,
+            in_navbar=True,
+            label="Bosque Aleatorio",
+        ),
         dbc.NavItem(className="ml-auto"),
     ],
     color="white",
@@ -87,6 +105,14 @@ def display_module(pathname):
         return eda.layout
     elif pathname == "/pca":
         return pca.layout
+    elif pathname == "/regtree":
+        return regtree.layout
+    elif pathname == "/classtree":
+        return classtree.layout
+    elif pathname == "/regforest":
+        return regforest.layout
+    elif pathname == "/classforest":
+        return classforest.layout
     else:
         return html.Div(
             [
