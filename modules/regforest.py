@@ -48,9 +48,21 @@ def regforest_card():
             # Texto que explica la temática de la página web.
             html.Div(
                 id="intro",
-                children="Explicación bosque regresor"
+                children="Los árboles de decisión representan uno de los algoritmos de aprendizaje supervisado más utilizados, los cuales soportan tanto valores numéricos como nominales. Para esto, se construye una estructura jerárquica que divide los datos en función de condicionales."
                 ,
             ),
+
+            html.Div(
+                style={'display': 'flex', 'align-items': 'center', 'justify-content': 'center', 'height': '20em'},
+                children=[
+                    html.Img(
+                        id="tree1",
+                        src="/assets/tree1.png",
+                        style = {'width': '25em', 'height': '15em'}
+                    )
+                ]
+            ),
+
             # Texto secundario de explicacion.
             html.Div(
                 id="intro2",
