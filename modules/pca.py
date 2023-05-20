@@ -24,11 +24,28 @@ import dash_bootstrap_components as dbc
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
+tabs_styles = {
+    'height': '44px'
+}
+tab_style = {
+    'borderBottom': '1px solid #d6d6d6',
+    'padding': '6px',
+    'fontWeight': 'bold'
+}
 
+tab_selected_style = {
+    'borderTop': '1px solid #d6d6d6',
+    'borderBottom': '1px solid #d6d6d6',
+    'backgroundColor': 'Black',
+    'color': 'white',
+    'padding': '6px'
+}
 
 #---------------------------------------------------Definición de funciones para el front--------------------------------------------------------#
 def pca_card():
@@ -89,12 +106,6 @@ def pca_card():
 
     )
 
-dropdown_options = [
-    {'label': 'Dataset 1', 'value': 'assets/dt1.csv'},
-    {'label': 'Dataset 2', 'value': 'assets/dt2.csv'},
-    {'label': 'Dataset 3', 'value': 'assets/dt3.csv'}
-]
-
 #Contenedor principal de la página en un Div
 pca.layout = html.Div(
     id="page-content",
@@ -152,8 +163,8 @@ pca.layout = html.Div(
 
 def parse_contents(contents, filename, date):
     content_type, content_string = contents.split(',')
-
     decoded = base64.b64decode(content_string)
+    global df
     try:
         if 'csv' in filename:
             # Assume that the user uploaded a CSV file
@@ -194,7 +205,7 @@ def parse_contents(contents, filename, date):
             id='matriz',
             figure={
                 'data': [
-                    {'x': df.corr().columns, 'y': df.corr().columns, 'z': np.triu(df.corr().values, k=1), 'type': 'heatmap', 'colorscale': 'RdBu', 'symmetric': False}
+                    {'x': df.corr(numeric_only=True).columns, 'y': df.corr(numeric_only=True).columns, 'z': np.triu(df.corr(numeric_only=True).values, k=1), 'type': 'heatmap', 'colorscale': 'RdBu', 'symmetric': False}
                 ],
                 'layout': {
                     'title': 'Matriz de correlación',
@@ -203,14 +214,14 @@ def parse_contents(contents, filename, date):
                     # Agregamos el valor de correlación por en cada celda (text_auto = True)
                     'annotations': [
                         dict(
-                            x=df.corr().columns[i],
-                            y=df.corr().columns[j],
-                            text=str(round(df.corr().values[i][j], 4)),
+                            x=df.corr(numeric_only=True).columns[i],
+                            y=df.corr(numeric_only=True).columns[j],
+                            text=str(round(df.corr(numeric_only=True).values[i][j], 4)),
                             showarrow=False,
                             font=dict(
-                                color='white' if abs(df.corr().values[i][j]) >= 0.67  else 'black'
+                                color='white' if abs(df.corr(numeric_only=True).values[i][j]) >= 0.67  else 'black'
                             ),
-                        ) for i in range(len(df.corr().columns)) for j in range(i)
+                        ) for i in range(len(df.corr(numeric_only=True).columns)) for j in range(i)
                     ],
                 },
             },
@@ -233,6 +244,15 @@ def parse_contents(contents, filename, date):
         html.H3(
             "Cálculo de Componentes Principales"
         ),
+        html.P(
+            "Una vez que haz identificado correlaciones entre pares de variables el siguiente paso es configurar los parámetros que se muestran a continuación, los cuales son necesarios para que el algoritmo funcione."
+        ),
+        html.P(
+            "Al terminar, presiona sobre el botón rojo para observar los resultados."
+        ),
+        dbc.Alert(
+            "ⓘ Si tienes alguna duda posicionate sobre cada parámetro para más información.", color="secondary", style={"font-size": "10px","width":"41%" }
+        ),
         html.Div(
             children=[
                 dbc.Row(
@@ -246,8 +266,17 @@ def parse_contents(contents, filename, date):
                                             id="tooltip-method", style={"cursor":"pointer", "display": "flex", "align-items": "center", "justify-content": "center", "height": "100%"},
                                             ),
                                             dbc.Tooltip(
-                                                "Selecciona un método de    estandarización.",
-                                                target="tooltip-method"
+                                                [
+                                                    dcc.Markdown('''
+                                                        **Estandarización:**  
+                                                        Consiste en escalar o normalizar el rango de las variables iniciales, para que cada una de éstas contribuya por igual en el análisis.
+
+                                                        Selecciona alguno de los dos métodos:
+                                                        - Escalamiento usando **StandardScaler( )**: sigue la distribución normal estándar, por lo que hace la media = 0 y escala los datos a la varianza unitaria.
+                                                        - Normalización usando **MinMaxScaler( )**:  transforma las características de un conjunto de datos para que estén en un rango específico entre un valor mínimo y máximo.
+                                                    ''', style={'text-align': 'left'}),
+                                                ],
+                                                target="tooltip-method", placement="left", style={"font-size":"10px"},
                                             ),
                                         ],
                                         style={"height":"50px", "padding": "0"},
@@ -277,8 +306,15 @@ def parse_contents(contents, filename, date):
                                                 id="tooltip-numpc", style={"cursor":"pointer", "display": "flex", "align-items": "center", "justify-content": "center", "height": "100%"}
                                             ),
                                             dbc.Tooltip(
-                                                "Elige la cantidad de componentes que quieras tomar en cuenta para el cálculo.",
-                                                target="tooltip-numpc"
+                                                [
+                                                    dcc.Markdown('''
+                                                        **Número de Componentes Principales:**  
+                                                        El objetivo de PCA es reducir la dimensionalidad de un conjunto de datos, manteniendo al mismo tiempo la mayor cantidad posible de información.
+
+                                                        Así que, por regla general, se suelen considerar tantas componentes como número de variables numéricas existan en el dataset. Sin embargo, siéntete en libertad de escoger tantas como desees.
+                                                    ''', style={'text-align': 'left'}),
+                                                ],
+                                                target="tooltip-numpc", placement="left", style={"font-size":"10px"},
                                             ),
                                         ],
                                         style={"height":"50px", "padding": "0"},
@@ -301,11 +337,24 @@ def parse_contents(contents, filename, date):
                         ),
                         dbc.Col(
                             [
-                                dbc.Row(
-                                    dbc.Badge("ⓘ Porcentaje de Relevancia", color="primary",
-                                        id="tooltip-method", style={"cursor":"pointer", "display": "flex", "align-items": "center", "justify-content": "center", "height": "100%"}
-                                        ),
-                                    style={"height":"50px"}
+                               dbc.Row(
+                                    html.Div(
+                                        [
+                                            dbc.Badge("ⓘ Porcentaje de Relevancia", color="primary",
+                                                id="tooltip-percent", style={"cursor":"pointer", "display": "flex", "align-items": "center", "justify-content": "center", "height": "100%"}
+                                            ),
+                                            dbc.Tooltip(
+                                                [
+                                                    dcc.Markdown('''
+                                                        **Porcentaje de Relevancia:**  
+                                                        Generalmente suele elegirse un porcentaje de relevancia que esté entre 75% y 90% de varianza acumulada, lo que se busca es perder la menor cantidad posible de información.
+                                                    ''', style={'text-align': 'left'}),
+                                                ],
+                                                target="tooltip-percent", placement="left", style={"font-size":"10px"},
+                                            ),
+                                        ],
+                                        style={"height":"50px", "padding": "0"},
+                                    ),
                                 ),
                                 dbc.Row(
                                     dbc.Input(
@@ -317,6 +366,7 @@ def parse_contents(contents, filename, date):
                                         max=0.9,
                                         style={"font-size": "medium"}
                                     ),
+                                    style={"height":"50px"}
                                 ),
                             ],
                             class_name="me-3"
@@ -325,11 +375,18 @@ def parse_contents(contents, filename, date):
                     style={"justify-content": "between", "height": "100%"}
                 ),
             ],
-            style={"font-size":"20px"},
-            className="mt-4",
+            style={"font-size":"20px", "margin":"30px 0"}
         ),
-
-    ])
+        html.Div(
+            children=
+            [
+                dbc.Button(
+                    "Presiona para obtener los Componentes Principales", id="pca-btn", color="danger", style={"width":"40%"},
+                ),
+            ],
+            style={"display": "flex", "justify-content": "center"},
+        ),
+    ],)
 
 @callback(Output('output-data-upload-pca', 'children'),
             Input('upload-data', 'contents'),
