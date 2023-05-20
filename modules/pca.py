@@ -30,23 +30,6 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
-tabs_styles = {
-    'height': '44px'
-}
-tab_style = {
-    'borderBottom': '1px solid #d6d6d6',
-    'padding': '6px',
-    'fontWeight': 'bold'
-}
-
-tab_selected_style = {
-    'borderTop': '1px solid #d6d6d6',
-    'borderBottom': '1px solid #d6d6d6',
-    'backgroundColor': 'Black',
-    'color': 'white',
-    'padding': '6px'
-}
-
 #---------------------------------------------------Definición de funciones para el front--------------------------------------------------------#
 def pca_card():
     """
@@ -284,7 +267,7 @@ def parse_contents(contents, filename, date):
                                 ),
                                 dbc.Row(
                                     dbc.Select(
-                                        id='select-escale',
+                                        id='select-scale',
                                         options=[
                                             {'label': 'StandardScaler', 'value': "StandardScaler()"},
                                             {'label': 'MinMaxScaler', 'value': "MinMaxScaler()"},
@@ -322,7 +305,7 @@ def parse_contents(contents, filename, date):
                                 ),
                                 dbc.Row(
                                     dbc.Input(
-                                        id='n_components',
+                                        id='num_components',
                                         type='number',
                                         placeholder='None',
                                         value=None,
@@ -337,7 +320,7 @@ def parse_contents(contents, filename, date):
                         ),
                         dbc.Col(
                             [
-                               dbc.Row(
+                                dbc.Row(
                                     html.Div(
                                         [
                                             dbc.Badge("ⓘ Porcentaje de Relevancia", color="primary",
@@ -358,7 +341,7 @@ def parse_contents(contents, filename, date):
                                 ),
                                 dbc.Row(
                                     dbc.Input(
-                                        id='relevancia',
+                                        id='relevance',
                                         type='number',
                                         placeholder='None',
                                         value=0.9,
@@ -386,6 +369,79 @@ def parse_contents(contents, filename, date):
             ],
             style={"display": "flex", "justify-content": "center"},
         ),
+        # ---- TABS ----
+        html.Div(
+            [
+                dbc.Tabs(
+                    [
+                        dbc.Tab(
+                            children=[
+                                dash_table.DataTable(
+                                    id="matriz-estandarizada",
+                                    columns=[{"name": i, "id": i} for i in df.select_dtypes(include=['float64', 'int64']).columns],
+                                    page_size=8,
+                                    style_cell={
+                                        'textAlign': 'left',
+                                        'padding': '1em',
+                                        'border': '1px solid black',
+                                        'borderRadius': '5px'
+                                    },
+                                    style_header={
+                                        'fontWeight': 'bold',
+                                        'backgroundColor': 'rgb(230, 230, 230)',
+                                        'border': '1px solid black',
+                                        'borderRadius': '5px'
+                                    },
+                                    style_data_conditional=[
+                                        {
+                                            'if': {'column_id': 'Stat'},
+                                            'fontWeight': 'bold',
+                                            'backgroundColor': 'rgb(248, 248, 248)',
+                                            'border': '1px solid black',
+                                            'borderRadius': '5px'
+                                        }
+                                    ],
+                                    style_table={
+                                        'height': 'auto',
+                                        'overflowX': 'auto'
+                                    },
+                                ),
+                            ],
+                            label="Matriz Estandarizada", tab_id="tab-1", tab_style={"width":"auto"}),
+                        dbc.Tab(
+                                children=[
+                                    dcc.Graph(
+                                        id="varianza-explicada"
+                                    ),
+                                ],
+                                label="Varianza Explicada (%)", tab_id="tab-2", tab_style={"width":"auto"}),
+                        dbc.Tab(
+                                children=[
+                                    dcc.Graph(
+                                        id="varianza-acumulada"
+                                    ),
+                                ],
+                                label="Número de Componentes Principales y Varianza Acumulada", tab_id="tab-3", tab_style={"width":"30%"}),
+                        dbc.Tab(
+                                children=[
+                                    html.Div(
+                                        [
+                                            dbc.Alert('Considerando un mínimo de 50% para el análisis de cargas, se seleccionan las variables basándonos en este gráfico de calor', color="primary"),
+                                            # Mostramos la gráfica generada en el callback ID = FigComponentes
+                                            dcc.Graph(
+                                                id='cargas'
+                                            ),
+                                        ],
+                                    ),
+                                ],
+                                label="Proporción de cargas y Selección de variables", tab_id="tab-4", tab_style={"width":"30%"})
+                    ],
+                    id="tabs",
+                    active_tab="tab-1",
+                    style={"margin-top":"45px"}
+                ),
+            ],
+        ),
     ],)
 
 @callback(Output('output-data-upload-pca', 'children'),
@@ -398,3 +454,100 @@ def update_output(list_of_contents, list_of_names,list_of_dates):
             parse_contents(c,n,d) for c,n,d in
             zip(list_of_contents, list_of_names,list_of_dates)]
         return children
+
+# ---- CALLBACK PARA CALCULAR LAS COMPONENTES PRINCIPALES ----
+# Outputs: - Matriz Estandarizada
+#          - Varianza Explicada
+#          - Varianza Acumulada
+#          - Proporción de Cargas
+#
+# Inputs: - Botón PCA: id='pca-btn'
+#
+# State: - Dropdown Escala: id='select-scale'
+#        - Num Componentes: id='num_components'
+#        - % Relevancia: id='relevance'
+@callback(
+    Output('matriz-estandarizada', 'data'), # (id del componente que actualizará, propiedad que se actualiza)
+    Output('varianza-explicada', 'figure'),
+    Output('varianza-acumulada', 'figure'),
+    Output('cargas', 'figure'),
+    Input('pca-btn', 'n_clicks'),
+    State('select-scale', 'value'),
+    State('num_components', 'value'),
+    State('relevance', 'value'),
+    prevent_initial_call=True
+)
+def calculo_pca(n_clicks, scale, components, relevancia):
+    if n_clicks is not None:
+        global MEstandarizada1
+        df_numeric = df.select_dtypes(include=['float64', 'int64'])
+        if scale == "StandardScaler()":
+            MEstandarizada1 = StandardScaler().fit_transform(df_numeric) # Se estandarizan los datos
+        elif scale == "MinMaxScaler()":
+            MEstandarizada1 = MinMaxScaler().fit_transform(df_numeric)
+        
+        MEstandarizada = pd.DataFrame(MEstandarizada1, columns=df_numeric.columns) # Se convierte a dataframe
+
+        pca = PCA(n_components=components).fit(MEstandarizada) # Se calculan los componentes principales
+        Varianza = pca.explained_variance_ratio_
+
+        for i in range(0, Varianza.size):
+            varAcumulada = sum(Varianza[0:i+1])
+            if varAcumulada >= relevancia:
+                varAcumuladaACP = (varAcumulada - Varianza[i])
+                numComponentesACP = i - 1
+                break
+        
+        # Se grafica la varianza explicada por cada componente en un gráfico de barras en Plotly:
+        fig = px.bar(x=range(1, Varianza.size +1), y=Varianza*100, labels=dict(x="Componentes Principales", y="Varianza explicada (%)"), title='Varianza explicada por cada componente')
+        # A cada barra se le agrega el porcentaje de varianza explicada
+        for i in range(1, Varianza.size +1):
+            fig.add_annotation(x=i, y=Varianza[i-1]*100, text=str(round(Varianza[i-1]*100, 2)) + '%',
+            # Se muestran por encima de la barra:
+            yshift=10, showarrow=False, font_color='black')
+        # Se agrega una gráfica de línea de la varianza explicada que pase por cada barra:
+        fig.add_scatter(x=np.arange(1, Varianza.size+1, step=1), y=Varianza*100, mode='lines+markers', name='Varianza explicada',showlegend=False)
+        # Mostramos todos los valores del eje X:
+        fig.update_xaxes(tickmode='linear')
+        
+        fig2 = px.line(x=np.arange(1, Varianza.size+1, step=1), y=np.cumsum(Varianza))
+        fig2.update_layout(title='Varianza acumulada en los componentes',
+                            xaxis_title='Número de componentes',
+                            yaxis_title='Varianza acumulada')
+        # Se resalta el número de componentes que se requieren para alcanzar el 90% de varianza acumulada
+        fig2.add_shape(type="line", x0=1, y0=relevancia, x1=numComponentesACP+1, y1=relevancia, line=dict(color="Red", width=2, dash="dash"))
+        fig2.add_shape(type="line", x0=numComponentesACP+1, y0=0, x1=numComponentesACP+1, y1=varAcumuladaACP, line=dict(color="Green", width=2, dash="dash"))
+        # Se muestra un punto en la intersección de las líneas
+        fig2.add_annotation(x=numComponentesACP+1, y=varAcumuladaACP, text=str(round(varAcumuladaACP*100, 1))+f'%. {numComponentesACP+1} Componentes', showarrow=True, arrowhead=1)
+        # Se agregan puntos en la línea de la gráfica
+        fig2.add_scatter(x=np.arange(1, Varianza.size+1, step=1), y=np.cumsum(Varianza), mode='markers', marker=dict(size=10, color='blue'), showlegend=False, name='# Componentes')
+        # Se le agrega el área bajo la curva
+        fig2.add_scatter(x=np.arange(1, Varianza.size+1, step=1), y=np.cumsum(Varianza), fill='tozeroy', mode='none', showlegend=False, name='Área bajo la curva')
+        fig2.update_xaxes(range=[1, Varianza.size]) # Se ajusta al tamaño de la gráfica
+        fig2.update_xaxes(tickmode='linear')
+        fig2.update_yaxes(range=[0, 1.1], 
+                        tickmode='array',
+                        tickvals=np.arange(0, 1.1, step=0.1))
+
+        # 6
+        CargasComponentes = pd.DataFrame(abs(pca.components_), columns=df_numeric.columns)
+        CargasComponentess=CargasComponentes.head(numComponentesACP+1) 
+
+        fig3 = px.imshow(CargasComponentes.head(numComponentesACP+1), color_continuous_scale='RdBu_r')
+        fig3.update_layout(title='Cargas de los componentes', xaxis_title='Variables', yaxis_title='Componentes')
+        # Agregamos los valores de las cargas en la gráfica (Si es mayor a 0.5, de color blanco, de lo contrario, de color negro):
+        fig3.update_yaxes(tickmode='linear')
+        for i in range(0, CargasComponentess.shape[0]):
+            for j in range(0, CargasComponentess.shape[1]):
+                if CargasComponentess.iloc[i,j] >= 0.5:
+                    color = 'white'
+                else:
+                    color = 'black'
+                fig3.add_annotation(x=j, y=i, text=str(round(CargasComponentess.iloc[i,j], 4)), showarrow=False, font=dict(color=color))
+        
+
+        return MEstandarizada.to_dict('records'), fig, fig2, fig3
+    
+    elif n_clicks is None:
+        import dash.exceptions as de
+        raise de.PreventUpdate
