@@ -187,7 +187,8 @@ regtree.layout = html.Div(
                 ),
 
                 html.Hr(),
-                html.Div(id = 'output-data-upload-regtree'),
+                html.Div(id = 'output-data-upload-regtree'),                
+
                 ]),
                 ),
                 #html.Div(id = 'output-dataset-upload'),
@@ -326,6 +327,19 @@ def regtree(df, filename, columns):
                     ],
                     style={"justify-content": "between", "height": "100%"}
                 ),
+                html.Div(
+                    children=[
+                        html.H3("Parámetros del árbol de decisión"),
+                        html.Label("Profundidad máxima del árbol (max_depth):"),
+                        dcc.Input(type="number", id="input-max-depth", min=1, step=1),
+                        html.Label("Número mínimo de muestras para dividir un nodo interno (min_samples_split):"),
+                        dcc.Input(type="number", id="input-min-samples-split", min=2, step=1),
+                        html.Label("Número mínimo de muestras para ser una hoja (min_samples_leaf):"),
+                        dcc.Input(type="number", id="input-min-samples-leaf", min=1, step=1),
+                    ],
+                    style={"font-size": "20px"},
+                    className="mt-4",
+                ),
                 dbc.Row(
                     dbc.Col(
                         dbc.Button("Enviar", id="submit-button", color="primary", className="mt-3", style={"justify-content": "between", "height": "100%"}),
@@ -420,8 +434,12 @@ def create_comparison_chart(Y_test, Y_Predicted):
     )
     return fig
 
-def generate_decision_tree(X_train, X_test, Y_train, Y_test):
-    reg_tree = DecisionTreeRegressor(random_state=0)
+def generate_decision_tree(X_train, X_test, Y_train, Y_test, max_depth=9, min_samples_split=8, min_samples_leaf=4):
+    reg_tree = DecisionTreeRegressor(
+    random_state=0,
+    max_depth=max_depth,
+    min_samples_split=min_samples_split,
+    min_samples_leaf=min_samples_leaf)
     reg_tree.fit(X_train, Y_train)
     Y_Predicted = reg_tree.predict(X_test)
     comparison_df = pd.DataFrame({"Y_Real": Y_test.flatten(), "Y_Pronosticado": Y_Predicted})
@@ -437,13 +455,78 @@ def generate_decision_tree(X_train, X_test, Y_train, Y_test):
     }
     return comparison_df, reg_tree, tree_parameters, Y_Predicted
 
+def create_input_form(predictors):
+    input_form = []
+    for predictor in predictors:
+        input_form.append(
+            html.Div(
+                [
+                    html.Label(predictor),
+                    dcc.Input(
+                        type="number",
+                        id=f"input-{predictor}",  # Agrega el atributo id a la entrada
+                    ),
+                ],
+                className="form-group",
+            )
+        )
+    return input_form
+
+
+
+@callback(Output("input-form", "children"), Input("submit-button", "n_clicks"))
+def update_input_form(n_clicks):
+    if n_clicks is None:
+        return ""
+    return create_input_form(global_predictors)
+
+def predict_new_values(reg_tree, predictors, input_values):
+    input_data = pd.DataFrame(input_values, columns=predictors)
+    prediction = reg_tree.predict(input_data)
+    return prediction
+
+@callback(
+    Output("prediction-result", "children"),
+    Input("predict-button", "n_clicks"),
+    State("input-form", "children"),
+)
+def show_prediction(n_clicks, input_form):
+    if n_clicks is None or input_form is None:
+        return ""
+
+    input_values = {}
+    all_states = dash.callback_context.states
+    for child in input_form:
+        label = child['props']['children'][0]['props']['children']
+        if label in global_predictors:
+            input_id = child['props']['children'][1]['props']['id']
+            try:
+                # Agrega el id del campo de entrada a all_states
+                all_states[f"{input_id}.value"] = child['props']['children'][1]['props']['value']
+                input_values[label] = float(all_states[f"{input_id}.value"])
+            except KeyError:
+                print(f"Error: No se encontró la clave '{input_id}.value' en dash.callback_context.states")
+                print("Valores de entrada:", input_values)
+                print("Claves presentes en dash.callback_context.states:", dash.callback_context.states.keys())
+
+    prediction = predict_new_values(global_reg_tree, global_predictors, [input_values])
+    return f"La predicción del precio de la acción es: {prediction[0]:.2f}"
+
+
+
+
+
 @callback(
     Output("output-data", "children"),
     Input("submit-button", "n_clicks"),
     State("select-predictors", "value"),
     State("select-regressor", "value"),
+    State("input-max-depth", "value"),
+    State("input-min-samples-split", "value"),
+    State("input-min-samples-leaf", "value"),
+
 )
-def split_data(n_clicks, predictors, regressor):
+def split_data(n_clicks, predictors, regressor, max_depth, min_samples_split, min_samples_leaf):
     global global_df
     global global_predictors
     global global_regressor
@@ -463,7 +546,11 @@ def split_data(n_clicks, predictors, regressor):
     X = np.array(global_df[predictors])
     Y = np.array(global_df[[regressor]])
     X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size = 0.2, random_state = 0, shuffle = True)
-    comparison_df, reg_tree, tree_parameters, Y_Predicted = generate_decision_tree(X_train, X_test, Y_train, Y_test)
+    comparison_df, reg_tree, tree_parameters, Y_Predicted = generate_decision_tree(
+        X_train, X_test, Y_train, Y_test, max_depth, min_samples_split, min_samples_leaf
+    )
+    global global_reg_tree 
+    global_reg_tree = reg_tree
     comparison_chart = create_comparison_chart(Y_test, Y_Predicted)
 
     
@@ -499,6 +586,18 @@ def split_data(n_clicks, predictors, regressor):
         style={'height': '300px', 'overflowY': 'scroll', 'border': '1px solid', 'padding': '10px'},
     )
 
+    new_forecasts_section = html.Div(
+        [
+            html.H3("Generar nuevos pronósticos"),
+            html.P("Introduce los valores de las variables predictoras:"),
+            html.Div(id="input-form"),
+            html.Button("Predecir", id="predict-button", className="mt-3"),
+            html.Div(id="prediction-result", className="mt-4"),
+        ],
+        className="mt-4",
+    )
+
+
     return (
     html.H3("Generación del Árbol de Decisión:"),
     "El árbol generado cuenta con los siguientes parámetros:",
@@ -514,4 +613,6 @@ def split_data(n_clicks, predictors, regressor):
     tree_rules_container,
     html.Br(),
     dcc.Graph(figure=comparison_chart),
+    html.Br(),
+    new_forecasts_section
 )
