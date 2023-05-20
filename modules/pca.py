@@ -479,16 +479,20 @@ def update_output(list_of_contents, list_of_names,list_of_dates):
 )
 def calculo_pca(n_clicks, scale, components, relevancia):
     if n_clicks is not None:
-        global MEstandarizada1
+        global matriz_estandarizada
         df_numeric = df.select_dtypes(include=['float64', 'int64'])
+        # ---- ESTANDARIZACIÓN ----
         if scale == "StandardScaler()":
-            MEstandarizada1 = StandardScaler().fit_transform(df_numeric) # Se estandarizan los datos
+            matriz_estandarizada = StandardScaler().fit_transform(df_numeric)
         elif scale == "MinMaxScaler()":
-            MEstandarizada1 = MinMaxScaler().fit_transform(df_numeric)
+            matriz_estandarizada = MinMaxScaler().fit_transform(df_numeric)
         
-        MEstandarizada = pd.DataFrame(MEstandarizada1, columns=df_numeric.columns) # Se convierte a dataframe
+        # Conversión de la matriz estandarizada en un dataframe
+        mat_stand_dataframe = pd.DataFrame(matriz_estandarizada, columns=df_numeric.columns)
+        # ---- END ESTANDARIZACIÓN ----
 
-        pca = PCA(n_components=components).fit(MEstandarizada) # Se calculan los componentes principales
+        # ---- CÁLCULO DE COMPONENTES PRINCIPALES (PCA) ----
+        pca = PCA(n_components=components).fit(mat_stand_dataframe) # components: elegidos por el usuario
         Varianza = pca.explained_variance_ratio_
 
         for i in range(0, Varianza.size):
@@ -498,55 +502,65 @@ def calculo_pca(n_clicks, scale, components, relevancia):
                 numComponentesACP = i - 1
                 break
         
-        # Se grafica la varianza explicada por cada componente en un gráfico de barras en Plotly:
-        fig = px.bar(x=range(1, Varianza.size +1), y=Varianza*100, labels=dict(x="Componentes Principales", y="Varianza explicada (%)"), title='Varianza explicada por cada componente')
-        # A cada barra se le agrega el porcentaje de varianza explicada
+        # ---- GRÁFICA PARA LA VARIANZA EXPLICADA ----
+        varianza_explicada = px.bar(x=range(1, Varianza.size +1), y=Varianza*100, labels=dict(x="Componentes Principales", y="Varianza explicada (%)"), title='Varianza explicada por cada componente')
+
+        # Se muestra el porcentaje de varianza de cada componente encima de su respectiva barra
         for i in range(1, Varianza.size +1):
-            fig.add_annotation(x=i, y=Varianza[i-1]*100, text=str(round(Varianza[i-1]*100, 2)) + '%',
-            # Se muestran por encima de la barra:
+            varianza_explicada.add_annotation(x=i, y=Varianza[i-1]*100, text=str(round(Varianza[i-1]*100, 2)) + '%',
             yshift=10, showarrow=False, font_color='black')
-        # Se agrega una gráfica de línea de la varianza explicada que pase por cada barra:
-        fig.add_scatter(x=np.arange(1, Varianza.size+1, step=1), y=Varianza*100, mode='lines+markers', name='Varianza explicada',showlegend=False)
-        # Mostramos todos los valores del eje X:
-        fig.update_xaxes(tickmode='linear')
+
+        # Se agrega un scatter que pase por la varianza de cada componente
+        varianza_explicada.add_scatter(x=np.arange(1, Varianza.size+1, step=1), y=Varianza*100, mode='lines+markers', name='Varianza explicada',showlegend=False)
+
+        # Eje X: valores
+        varianza_explicada.update_xaxes(tickmode='linear')
+        # ---- END VARIANZA EXPLICADA ----
         
-        fig2 = px.line(x=np.arange(1, Varianza.size+1, step=1), y=np.cumsum(Varianza))
-        fig2.update_layout(title='Varianza acumulada en los componentes',
+        # ---- VARIANZA ACUMULADA ----
+        varianza_acumulada = px.line(x=np.arange(1, Varianza.size+1, step=1), y=np.cumsum(Varianza))
+        varianza_acumulada.update_layout(title='Varianza acumulada en los componentes',
                             xaxis_title='Número de componentes',
                             yaxis_title='Varianza acumulada')
+        
         # Se resalta el número de componentes que se requieren para alcanzar el 90% de varianza acumulada
-        fig2.add_shape(type="line", x0=1, y0=relevancia, x1=numComponentesACP+1, y1=relevancia, line=dict(color="Red", width=2, dash="dash"))
-        fig2.add_shape(type="line", x0=numComponentesACP+1, y0=0, x1=numComponentesACP+1, y1=varAcumuladaACP, line=dict(color="Green", width=2, dash="dash"))
-        # Se muestra un punto en la intersección de las líneas
-        fig2.add_annotation(x=numComponentesACP+1, y=varAcumuladaACP, text=str(round(varAcumuladaACP*100, 1))+f'%. {numComponentesACP+1} Componentes', showarrow=True, arrowhead=1)
+        varianza_acumulada.add_shape(type="line", x0=1, y0=relevancia, x1=numComponentesACP+1, y1=relevancia, line=dict(color="Red", width=2, dash="dash"))
+        varianza_acumulada.add_shape(type="line", x0=numComponentesACP+1, y0=0, x1=numComponentesACP+1, y1=varAcumuladaACP, line=dict(color="Green", width=2, dash="dash"))
+
+        # Intersección
+        varianza_acumulada.add_annotation(x=numComponentesACP+1, y=varAcumuladaACP, text=str(round(varAcumuladaACP*100, 1))+f'%. {numComponentesACP+1} Componentes', showarrow=True, arrowhead=1)
+
         # Se agregan puntos en la línea de la gráfica
-        fig2.add_scatter(x=np.arange(1, Varianza.size+1, step=1), y=np.cumsum(Varianza), mode='markers', marker=dict(size=10, color='blue'), showlegend=False, name='# Componentes')
+        varianza_acumulada.add_scatter(x=np.arange(1, Varianza.size+1, step=1), y=np.cumsum(Varianza), mode='markers', marker=dict(size=10, color='blue'), showlegend=False, name='# Componentes')
+
         # Se le agrega el área bajo la curva
-        fig2.add_scatter(x=np.arange(1, Varianza.size+1, step=1), y=np.cumsum(Varianza), fill='tozeroy', mode='none', showlegend=False, name='Área bajo la curva')
-        fig2.update_xaxes(range=[1, Varianza.size]) # Se ajusta al tamaño de la gráfica
-        fig2.update_xaxes(tickmode='linear')
-        fig2.update_yaxes(range=[0, 1.1], 
+        varianza_acumulada.add_scatter(x=np.arange(1, Varianza.size+1, step=1), y=np.cumsum(Varianza), fill='tozeroy', mode='none', showlegend=False, name='Área bajo la curva')
+        varianza_acumulada.update_xaxes(range=[1, Varianza.size]) # Se ajusta al tamaño de la gráfica
+        varianza_acumulada.update_xaxes(tickmode='linear')
+        varianza_acumulada.update_yaxes(range=[0, 1.1], 
                         tickmode='array',
                         tickvals=np.arange(0, 1.1, step=0.1))
-
-        # 6
+        # ---- END VARIANZA ACUMULADA ----
+        
+        # ---- PROPORCIÓN DE CARGAS ----
         CargasComponentes = pd.DataFrame(abs(pca.components_), columns=df_numeric.columns)
         CargasComponentess=CargasComponentes.head(numComponentesACP+1) 
 
-        fig3 = px.imshow(CargasComponentes.head(numComponentesACP+1), color_continuous_scale='RdBu_r')
-        fig3.update_layout(title='Cargas de los componentes', xaxis_title='Variables', yaxis_title='Componentes')
-        # Agregamos los valores de las cargas en la gráfica (Si es mayor a 0.5, de color blanco, de lo contrario, de color negro):
-        fig3.update_yaxes(tickmode='linear')
+        cargas = px.imshow(CargasComponentes.head(numComponentesACP+1), color_continuous_scale='RdBu_r')
+        cargas.update_layout(title='Cargas de los componentes', xaxis_title='Variables', yaxis_title='Componentes')
+
+        # 'Heatmap' para detectar cargas >= 50%
+        cargas.update_yaxes(tickmode='linear')
         for i in range(0, CargasComponentess.shape[0]):
             for j in range(0, CargasComponentess.shape[1]):
                 if CargasComponentess.iloc[i,j] >= 0.5:
                     color = 'white'
                 else:
                     color = 'black'
-                fig3.add_annotation(x=j, y=i, text=str(round(CargasComponentess.iloc[i,j], 4)), showarrow=False, font=dict(color=color))
+                cargas.add_annotation(x=j, y=i, text=str(round(CargasComponentess.iloc[i,j], 4)), showarrow=False, font=dict(color=color))
         
 
-        return MEstandarizada.to_dict('records'), fig, fig2, fig3
+        return mat_stand_dataframe.to_dict('records'), varianza_explicada, varianza_acumulada, cargas
     
     elif n_clicks is None:
         import dash.exceptions as de
