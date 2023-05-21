@@ -11,14 +11,13 @@ import io
 from io import BytesIO
 import dash # Biblioteca principal de Dash.
 from msilib.schema import Component
-from dash import dcc, html, Input, Output, callback# Módulo de Dash para acceder a componentes interactivos y etiquetas de HTML.
+from dash import dcc, html, Input, Output, dash_table, callback# Módulo de Dash para acceder a componentes interactivos y etiquetas de HTML.
 from dash.dependencies import Input, Output, State # Dependencias de Dash para la implementación de Callbacks.
 import dash_bootstrap_components as dbc # Biblioteca de componentes de Bootstrap en Dash para el Front-End responsive.
 from modules import home, eda, pca, regtree, classtree, regforest, classforest
 import pathlib
 import plotly.express as px
 import plotly.graph_objects as go
-import dash_table
 import pandas as pd
 import dash_bootstrap_components as dbc
 import seaborn as sns
@@ -109,7 +108,7 @@ pca.layout = html.Div(
                     className="four columns",
                     children=html.Div(
                         [
-                            html.H4("Carga o elige el dataset para iniciar el Análisis Exploratorio de Datos", className="text-upload"),
+                            html.H4("Carga o elige el dataset para iniciar el Análisis de Componentes Principales", className="text-upload"),
                             # Muestra el módulo de carga
                             dcc.Upload(
                                 id="upload-data",
@@ -308,7 +307,7 @@ def parse_contents(contents, filename, date):
                                         id='num_components',
                                         type='number',
                                         placeholder='None',
-                                        value=None,
+                                        value=df.select_dtypes(include='number').shape[1],
                                         min=1,
                                         max=df.select_dtypes(include='number').shape[1],
                                         style={"font-size": "medium"}
@@ -426,7 +425,7 @@ def parse_contents(contents, filename, date):
                                 children=[
                                     html.Div(
                                         [
-                                            dbc.Alert('Considerando un mínimo de 50% para el análisis de cargas, se seleccionan las variables basándonos en este gráfico de calor', color="primary"),
+                                            dbc.Alert('ⓘ Selecciona solo aquellas variables que superen un umbral del 50%, son las más importantes', color="primary"),
                                             # Mostramos la gráfica generada en el callback ID = FigComponentes
                                             dcc.Graph(
                                                 id='cargas'
@@ -455,6 +454,139 @@ def update_output(list_of_contents, list_of_names,list_of_dates):
             zip(list_of_contents, list_of_names,list_of_dates)]
         return children
 
+# ---- FUNCIÓN PARA ESTANDARIZAR LOS DATOS ----
+def estandarizar_datos(df_numerica, scale):
+    """
+    Escala las columnas numéricas de un DataFrame según el tipo de escala indicado.
+
+    Parámetros:
+    df (pandas.DataFrame): DataFrame con las columnas a escalar.
+    scale (str): Tipo de escala a aplicar. Puede ser "StandardScaler()" o "MinMaxScaler()".
+
+    Retorna:
+    pandas.DataFrame: Nuevo DataFrame con las columnas numéricas escaladas.
+    """
+    if scale == "StandardScaler()":
+        matriz_estandarizada = StandardScaler().fit_transform(df_numerica)
+    elif scale == "MinMaxScaler()":
+        matriz_estandarizada = MinMaxScaler().fit_transform(df_numerica)
+    return pd.DataFrame(matriz_estandarizada, columns=df_numerica.columns)
+
+# ---- FUNCIÓN PARA OBTENER LA GRÁFICA DE VARIANZA EXPLICADA ----
+def grafico_varianza_explicada(varianza):
+    """
+    Crea un gráfico de barras que muestra la varianza explicada por cada componente principal.
+
+    Parámetros:
+    varianza (numpy.ndarray): Array con la varianza explicada por cada componente principal.
+
+    Retorna:
+    plotly.graph_objs._figure.Figure: Gráfico de barras con la varianza explicada por cada componente principal.
+    """
+    # Lista de colores para las barras
+    colors = px.colors.qualitative.Plotly
+
+    # Crear el gráfico de barras con colores específicos para cada barra
+    fig = go.Figure()
+    for i in range(1, varianza.size + 1):
+        fig.add_trace(go.Bar(x=[i], y=[varianza[i-1]*100],marker_color=colors[i % len(colors)], legendgroup=f'Componente {i}', name=f'Componente {i}'))
+
+    fig.update_layout(
+        title='Varianza explicada por cada componente',
+        xaxis=dict(title="Componentes Principales"),
+        yaxis=dict(title="Varianza explicada (%)")
+    )
+
+    # Se muestra el porcentaje de varianza de cada componente encima de su respectiva barra
+    for i in range(1, varianza.size + 1):
+        fig.add_annotation(x=i, y=varianza[i - 1] * 100, text=str(round(varianza[i - 1] * 100, 2)) + '%', yshift=10, showarrow=False, font_color='black')
+
+    # Se agrega un scatter que pase por la varianza de cada componente
+    fig.add_scatter(x=np.arange(1, varianza.size + 1, step=1), y=varianza * 100, mode='lines+markers', name='Varianza explicada', showlegend=False)
+
+    # Eje X: valores
+    fig.update_xaxes(tickmode='linear')
+    return fig
+
+def grafico_varianza_acumulada(varianza, varAcumulada, nComponentes, relevance):
+    """
+    Genera un gráfico que muestra la varianza acumulada en los componentes de un modelo.
+
+    Parámetros:
+    varianza (numpy.ndarray): Array que contiene la varianza de cada componente.
+    varAcumulada (float): Varianza acumulada en los componentes.
+    nComponentes (int): Número total de componentes.
+    relevance (float): Valor de referencia para la varianza acumulada.
+
+    Retorna:
+    Una instancia de go.Figure con el gráfico generado.
+    """
+    fig = go.Figure()
+
+    x_range = np.arange(1, varianza.size + 1, step=1)
+    y_range = np.cumsum(varianza)
+
+    fig.add_trace(go.Scatter(x=x_range, y=y_range, mode='lines+markers', marker=dict(size=10, color='blue'), name='Núm. Componente'))
+
+    fig.update_layout(title='Varianza acumulada en los componentes',
+                      xaxis_title='Número de componentes',
+                      yaxis_title='Varianza acumulada')
+
+    fig.add_shape(type="line", x0=1, y0=relevance, x1=nComponentes + 1, y1=relevance, line=dict(color="Red", width=2, dash="dash"))
+    fig.add_shape(type="line", x0=nComponentes + 1, y0=0, x1=nComponentes + 1, y1=varAcumulada, line=dict(color="Green", width=2, dash="dash"))
+
+    fig.add_annotation(x=nComponentes + 1, y=varAcumulada, text=str(round(varAcumulada * 100, 1)) + f'%. {nComponentes + 1} Componentes', showarrow=True, arrowhead=1)
+
+    fig.add_trace(go.Scatter(x=x_range, y=y_range, fill='tozeroy', mode='none', name='Área bajo la curva', fillcolor='rgba(0, 147, 255, 0.44)'))
+
+    fig.update_xaxes(range=[1, varianza.size], tickmode='linear')
+    fig.update_yaxes(range=[0, 1.1],
+                     tickmode='array',
+                     tickvals=np.arange(0, 1.1, step=0.1))
+    return fig
+
+def heatmap_cargas(df, pca, numComponentesPCA):
+    """
+    Genera un gráfico de mapa de calor de las cargas de los componentes principales utilizando Plotly.
+
+    Parámetros:
+    -----------
+    df : pandas.DataFrame
+        DataFrame que contiene los datos de entrada.
+    pca : sklearn.decomposition.PCA
+        Objeto PCA ajustado previamente con los datos de entrada.
+    numComponentesPCA : int
+        Número de componentes principales a considerar en el gráfico.
+
+    Retorno:
+    --------
+    fig : plotly.graph_objs.Figure
+        Gráfico de mapa de calor de las cargas de los componentes principales.
+    """
+    CargasComponentes = pd.DataFrame(abs(pca.components_), columns=df.columns)
+    CargasComponentess = CargasComponentes.head(numComponentesPCA + 1)
+
+    # Crear una instancia de go.Figure y configurar el heatmap
+    fig = go.Figure(go.Heatmap(z=CargasComponentess,
+                                   x=df.columns,
+                                   y=list(range(1, numComponentesPCA + 2)),
+                                   colorscale='RdBu_r'))
+
+    # Actualizar el diseño del gráfico
+    fig.update_layout(title='Cargas de los componentes', xaxis_title='Variables', yaxis_title='Componentes')
+
+    # 'Heatmap' para detectar cargas >= 50%
+    fig.update_yaxes(tickmode='linear')
+    for i in range(0, CargasComponentess.shape[0]):
+        for j in range(0, CargasComponentess.shape[1]):
+            if CargasComponentess.iloc[i, j] >= 0.5:
+                color = 'white'
+            else:
+                color = 'black'
+            fig.add_annotation(x=df.columns[j], y=i + 1, text=str(round(CargasComponentess.iloc[i, j], 4)), showarrow=False, font=dict(color=color))
+    return fig
+
+
 # ---- CALLBACK PARA CALCULAR LAS COMPONENTES PRINCIPALES ----
 # Outputs: - Matriz Estandarizada
 #          - Varianza Explicada
@@ -463,7 +595,7 @@ def update_output(list_of_contents, list_of_names,list_of_dates):
 #
 # Inputs: - Botón PCA: id='pca-btn'
 #
-# State: - Dropdown Escala: id='select-scale'
+# States: - Dropdown Escala: id='select-scale'
 #        - Num Componentes: id='num_components'
 #        - % Relevancia: id='relevance'
 @callback(
@@ -475,89 +607,32 @@ def update_output(list_of_contents, list_of_names,list_of_dates):
     State('select-scale', 'value'),
     State('num_components', 'value'),
     State('relevance', 'value'),
-    prevent_initial_call=True
 )
 def calculo_pca(n_clicks, scale, components, relevancia):
     if n_clicks is not None:
-        global matriz_estandarizada
-        df_numeric = df.select_dtypes(include=['float64', 'int64'])
         # ---- ESTANDARIZACIÓN ----
-        if scale == "StandardScaler()":
-            matriz_estandarizada = StandardScaler().fit_transform(df_numeric)
-        elif scale == "MinMaxScaler()":
-            matriz_estandarizada = MinMaxScaler().fit_transform(df_numeric)
-        
-        # Conversión de la matriz estandarizada en un dataframe
-        mat_stand_dataframe = pd.DataFrame(matriz_estandarizada, columns=df_numeric.columns)
-        # ---- END ESTANDARIZACIÓN ----
+        df_numeric = df.select_dtypes(include=['float64', 'int64'])
+        mat_stand_dataframe = estandarizar_datos(df_numeric, scale)
 
         # ---- CÁLCULO DE COMPONENTES PRINCIPALES (PCA) ----
         pca = PCA(n_components=components).fit(mat_stand_dataframe) # components: elegidos por el usuario
         Varianza = pca.explained_variance_ratio_
 
+        # ---- GRÁFICO DE BARRAS PARA REPRESENTAR LA VARIANZA EXPLICADA POR CADA COMPONENTE ----
+        varianza_explicada = grafico_varianza_explicada(Varianza)
+
+        # ---- GRÁFICO QUE MUESTRA LA VARIANZA ACUMULADA ----
         for i in range(0, Varianza.size):
             varAcumulada = sum(Varianza[0:i+1])
             if varAcumulada >= relevancia:
-                varAcumuladaACP = (varAcumulada - Varianza[i])
-                numComponentesACP = i - 1
+                varAcumuladaPCA = (varAcumulada - Varianza[i])
+                numComponentesPCA = i - 1
                 break
-        
-        # ---- GRÁFICA PARA LA VARIANZA EXPLICADA ----
-        varianza_explicada = px.bar(x=range(1, Varianza.size +1), y=Varianza*100, labels=dict(x="Componentes Principales", y="Varianza explicada (%)"), title='Varianza explicada por cada componente')
 
-        # Se muestra el porcentaje de varianza de cada componente encima de su respectiva barra
-        for i in range(1, Varianza.size +1):
-            varianza_explicada.add_annotation(x=i, y=Varianza[i-1]*100, text=str(round(Varianza[i-1]*100, 2)) + '%',
-            yshift=10, showarrow=False, font_color='black')
+        varianza_acumulada = grafico_varianza_acumulada(Varianza, varAcumuladaPCA, numComponentesPCA, relevancia)
 
-        # Se agrega un scatter que pase por la varianza de cada componente
-        varianza_explicada.add_scatter(x=np.arange(1, Varianza.size+1, step=1), y=Varianza*100, mode='lines+markers', name='Varianza explicada',showlegend=False)
-
-        # Eje X: valores
-        varianza_explicada.update_xaxes(tickmode='linear')
-        # ---- END VARIANZA EXPLICADA ----
-        
-        # ---- VARIANZA ACUMULADA ----
-        varianza_acumulada = px.line(x=np.arange(1, Varianza.size+1, step=1), y=np.cumsum(Varianza))
-        varianza_acumulada.update_layout(title='Varianza acumulada en los componentes',
-                            xaxis_title='Número de componentes',
-                            yaxis_title='Varianza acumulada')
-        
-        # Se resalta el número de componentes que se requieren para alcanzar el 90% de varianza acumulada
-        varianza_acumulada.add_shape(type="line", x0=1, y0=relevancia, x1=numComponentesACP+1, y1=relevancia, line=dict(color="Red", width=2, dash="dash"))
-        varianza_acumulada.add_shape(type="line", x0=numComponentesACP+1, y0=0, x1=numComponentesACP+1, y1=varAcumuladaACP, line=dict(color="Green", width=2, dash="dash"))
-
-        # Intersección
-        varianza_acumulada.add_annotation(x=numComponentesACP+1, y=varAcumuladaACP, text=str(round(varAcumuladaACP*100, 1))+f'%. {numComponentesACP+1} Componentes', showarrow=True, arrowhead=1)
-
-        # Se agregan puntos en la línea de la gráfica
-        varianza_acumulada.add_scatter(x=np.arange(1, Varianza.size+1, step=1), y=np.cumsum(Varianza), mode='markers', marker=dict(size=10, color='blue'), showlegend=False, name='# Componentes')
-
-        # Se le agrega el área bajo la curva
-        varianza_acumulada.add_scatter(x=np.arange(1, Varianza.size+1, step=1), y=np.cumsum(Varianza), fill='tozeroy', mode='none', showlegend=False, name='Área bajo la curva')
-        varianza_acumulada.update_xaxes(range=[1, Varianza.size]) # Se ajusta al tamaño de la gráfica
-        varianza_acumulada.update_xaxes(tickmode='linear')
-        varianza_acumulada.update_yaxes(range=[0, 1.1], 
-                        tickmode='array',
-                        tickvals=np.arange(0, 1.1, step=0.1))
-        # ---- END VARIANZA ACUMULADA ----
-        
-        # ---- PROPORCIÓN DE CARGAS ----
-        CargasComponentes = pd.DataFrame(abs(pca.components_), columns=df_numeric.columns)
-        CargasComponentess=CargasComponentes.head(numComponentesACP+1) 
-
-        cargas = px.imshow(CargasComponentes.head(numComponentesACP+1), color_continuous_scale='RdBu_r')
-        cargas.update_layout(title='Cargas de los componentes', xaxis_title='Variables', yaxis_title='Componentes')
-
-        # 'Heatmap' para detectar cargas >= 50%
-        cargas.update_yaxes(tickmode='linear')
-        for i in range(0, CargasComponentess.shape[0]):
-            for j in range(0, CargasComponentess.shape[1]):
-                if CargasComponentess.iloc[i,j] >= 0.5:
-                    color = 'white'
-                else:
-                    color = 'black'
-                cargas.add_annotation(x=j, y=i, text=str(round(CargasComponentess.iloc[i,j], 4)), showarrow=False, font=dict(color=color))
+        # ---- HEATMAP PARA REPRESENTAR LA PROPORCIÓN DE CARGAS ----
+        cargas = heatmap_cargas(df_numeric, pca, numComponentesPCA)
         
 
         return mat_stand_dataframe.to_dict('records'), varianza_explicada, varianza_acumulada, cargas
