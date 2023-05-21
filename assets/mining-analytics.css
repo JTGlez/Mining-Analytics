@@ -119,7 +119,7 @@ H5, H3 {
 }
 
 /* Animación para las Cards */
-.card:hover{
+.card-anim:hover{
     box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
     transform: translateY(-2px);
     transition: all 0.3s ease;

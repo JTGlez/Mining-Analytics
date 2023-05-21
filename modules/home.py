@@ -66,9 +66,15 @@ eda_card = dbc.Card(
     dbc.CardLink(
         [
             dbc.CardImg(
-                src="https://strategicfocus.com/wp-content/uploads/2019/12/Google_Cloud_DataAnalytics.gif",
                 top=True,
-                style={"height": "100px", "object-fit": "cover", "object-position": "center"},
+                style={
+                    "background-image": "url('https://strategicfocus.com/wp-content/uploads/2019/12/Google_Cloud_DataAnalytics.gif')",
+                    "background-repeat": "no-repeat",
+                    "background-position": "50% 33%",
+                    "background-size": "cover",
+                    "height": "150px",
+                    "width": "100%"
+                },
             ),
             dbc.CardBody(
                 [
@@ -83,16 +89,22 @@ eda_card = dbc.Card(
         href="\eda",
         style={"text-decoration": "none", "color": "black"}
     ),
-    class_name="mb-4 card",
+    class_name="mb-4 card-anim",
 )
 
 pca_card = dbc.Card(
     dbc.CardLink(
         [
             dbc.CardImg(
-                src="https://miro.medium.com/v2/resize:fit:1400/1*37a_i1t1tDxDYT3ZI6Yn8w.gif",
                 top=True,
-                style={"width": "100%", "height": "100px", "object-fit": "cover", "object-position": "center"},
+                style={
+                    "background-image": "url('https://miro.medium.com/v2/resize:fit:1400/1*37a_i1t1tDxDYT3ZI6Yn8w.gif')",
+                    "background-repeat": "no-repeat",
+                    "background-position": "50% 45%",
+                    "background-size": "cover",
+                    "height": "150px",
+                    "width": "100%"
+                },
             ),
             dbc.CardBody(
                 [
@@ -107,39 +119,73 @@ pca_card = dbc.Card(
         href="\pca",
         style={"text-decoration": "none", "color": "black"}
     ),
-    class_name="mb-4 card",
+    class_name="mb-4 card-anim",
 )
 
-forest_card = dbc.Card(
+dtree_card = dbc.Card(
     [
         dbc.CardImg(
-            src = "",
             top = True,
-            style = {}
+            style={
+                    "background-image": "url('https://cdn-images-1.medium.com/v2/resize:fill:1600:480/gravity:fp:0.5:0.4/1*7cyzrfuh9hKqz2lZxi_8ug.gif')",
+                    "background-repeat": "no-repeat",
+                    "background-position": "50% 74%",
+                    "background-size": "cover",
+                    "height": "150px",
+                    "width": "100%"
+                },
         ),
         dbc.CardBody(
             [
-
+                html.H4("Árboles de Decisión", className="card-title"),
+                html.P(
+                        "Un árbol de decisión es un algoritmo de aprendizaje automático utilizado tanto para problemas de regresión como de clasificación. Es una representación gráfica de un conjunto de reglas de decisión que se utilizan para tomar decisiones o predecir un valor objetivo en función de las características o atributos de los datos de entrada.",
+                        className="card-text",
+                ),
+                html.Div(
+                    [
+                        dbc.Button("Regresión", color="primary", style={"width":"25%", "height":"40px", "display":"flex", "flex-wrap":"wrap", "align-content":"center", "justify-content": "center", "font-size":"16px"}, href="\\regtree"),
+                        dbc.Button("Clasificación", color="danger", style={"width":"25%", "height":"40px", "display":"flex", "flex-wrap":"wrap", "align-content":"center", "justify-content": "center", "font-size":"16px"}, href="\classtree")
+                    ],
+                    style={"display":"flex", "justify-content": "space-evenly"}
+                )
             ]
         )
-
     ],
+    class_name="mb-4"
 )
 
-cluster_card = dbc.Card(
+rforest_card = dbc.Card(
     [
         dbc.CardImg(
-            src = "",
             top = True,
-            style = {}
+            style={
+                    "background-image": "url('https://1.bp.blogspot.com/-Ax59WK4DE8w/YK6o9bt_9jI/AAAAAAAAEQA/9KbBf9cdL6kOFkJnU39aUn4m8ydThPenwCLcBGAsYHQ/s0/Random%2BForest%2B03.gif')",
+                    "background-repeat": "no-repeat",
+                    "background-position": "50% 40%",
+                    "background-size": "cover",
+                    "height": "150px",
+                    "width": "100%"
+                },
         ),
         dbc.CardBody(
             [
-
+                html.H4("Bosques Aleatorios", className="card-title"),
+                html.P(
+                        "Un bosque aleatorio es un algoritmo de aprendizaje automático que combina múltiples árboles de decisión para realizar predicciones más precisas. Cada árbol individual en el bosque se construye a partir de un subconjunto aleatorio de datos y utiliza un enfoque llamado 'ensamble' para combinar las predicciones de todos los árboles.",
+                        className="card-text",
+                ),
+                html.Div(
+                    [
+                        dbc.Button("Regresión", color="primary", style={"width":"25%", "height":"40px", "display":"flex", "flex-wrap":"wrap", "align-content":"center", "justify-content": "center", "font-size":"16px"}, href="\\regforest"),
+                        dbc.Button("Clasificación", color="danger", style={"width":"25%", "height":"40px", "display":"flex", "flex-wrap":"wrap", "align-content":"center", "justify-content": "center", "font-size":"16px"}, href="\classforest")
+                    ],
+                    style={"display":"flex", "justify-content": "space-evenly"}
+                )
             ]
         )
-
     ],
+    class_name="mb-4"
 )
 
 
@@ -169,7 +215,9 @@ layout = html.Div(
                     children=[
                         # Muestra los módulos disponibles.
                         eda_card,
-                        pca_card
+                        pca_card,
+                        dtree_card,
+                        rforest_card
                     ],
                 ),
             ],
