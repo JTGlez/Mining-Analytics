@@ -68,18 +68,18 @@ def pca_card():
             # Texto secundario de explicacion.
             html.Div(
                 id="intro2",
-                children = "En esta sección podrás llevar a cabo este procedimiento de forma automatizada cargando uno de los datasets de prueba, o bien, cargando tu propio dataset.",
+                children = "En esta sección podrás llevar a cabo este procedimiento de forma automatizada cargando tu propio dataset.",
                 className="mb-4"
             ),
 
-            # Muestra una figura de exploración (GIF de lupa)
+            # Muestra una figura (GIF)
             html.Div(
                 style={'display': 'flex', 'align-items': 'center', 'justify-content': 'center'},
                 children=[
                     html.Img(
-                        id="pca",
-                        src="https://matthewdeakos.me/wp-content/uploads/2018/02/ezgif.com-crop-4.gif",
-                        style = {'width': '50%', 'height': '50%'},
+                        id="pca-gif",
+                        src="https://miro.medium.com/v2/resize:fit:1400/1*37a_i1t1tDxDYT3ZI6Yn8w.gif",
+                        style = {'width': '100%', 'height': '50%'},
                         className="mb-4"
                     ),
                 ],
