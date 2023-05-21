@@ -170,7 +170,7 @@ rforest_card = dbc.Card(
         ),
         dbc.CardBody(
             [
-                html.H4("Bosques Aleatorios", className="card-title"),
+                html.H4("Bosque Aleatorio", className="card-title"),
                 html.P(
                         "Un bosque aleatorio es un algoritmo de aprendizaje automático que combina múltiples árboles de decisión para realizar predicciones más precisas. Cada árbol individual en el bosque se construye a partir de un subconjunto aleatorio de datos y utiliza un enfoque llamado 'ensamble' para combinar las predicciones de todos los árboles.",
                         className="card-text",
