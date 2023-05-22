@@ -108,7 +108,7 @@ eda.layout = html.Div(
 
                         # Muestra el módulo de carga del dataset.
                         dcc.Upload(
-                        id = 'upload-data',
+                        id = 'upload-data-eda',
                         children = html.Div([
                             'Arrastra aquí el archivo en formato CSV o selecciónalo'
                         ]),
@@ -146,7 +146,7 @@ eda.layout = html.Div(
 
                     # Muestra el módulo de carga del dataset.
                     dcc.Dropdown(
-                    id='upload-data-static',
+                    id='upload-data-eda-static',
                     options = dropdown_options,
                     value = dropdown_options[0]['value'],
                     className='my-dropdown'
@@ -170,8 +170,8 @@ def parse_contents(contents, filename, date):
     try:
         if 'csv' in filename:
         # Assume that the user uploaded a CSV file
-            df = pd.read_csv(
-                io.StringIO(decoded.decode('utf-8')))
+            df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
+            print(df)
             return eda(df, filename)
         elif 'xls' in filename:
         # Assume that the user uploaded an excel file
@@ -192,6 +192,7 @@ def eda(df, filename):
     3. Identificación de outliers
     4. Análisis correlativo entre pares variables
     """
+
     # Crear el DataFrame con los tipos de datos, serializando la salida para su visualización como JSON
     dtypes_df = pd.DataFrame(df.dtypes, columns=["Data Type"]).reset_index().rename(columns={"index": "Column"})
     dtypes_df['Data Type'] = dtypes_df['Data Type'].astype(str)  # Convertir los tipos de datos a strings
@@ -221,13 +222,19 @@ def eda(df, filename):
     describe_df = df.describe().reset_index().rename(columns={"index": "Stat"})
     describe_df['Stat'] = describe_df['Stat'].astype(str)
 
-    # Obtener el resumen descriptivo
-    describe_categoric_df = df.describe(include = 'object').reset_index().rename(columns={"index": "Stat"})
-    describe_categoric_df['Stat'] = describe_categoric_df['Stat'].astype(str)
+     # Verificar si hay variables categóricas en el dataset
+    has_categorical = any(df.select_dtypes(include='object').columns)
+
+    if has_categorical:
+        # Obtener el resumen descriptivo
+        describe_categoric_df = df.describe(include='object').reset_index().rename(columns={"index": "Stat"})
+        describe_categoric_df['Stat'] = describe_categoric_df['Stat'].astype(str)
+        categorical_histogram = create_categorical_bar_charts(df)
+    else:
+        describe_categoric_df = pd.DataFrame()
+
 
     boxplot_graph = dcc.Graph(id='boxplot-graph')
-
-    categorical_histogram = create_categorical_bar_charts(df)
 
     return html.Div([
 
@@ -416,6 +423,9 @@ def eda(df, filename):
 
         html.Br(),
 
+        html.Div([
+
+               
         html.Div(
             children="4) Diagramas de variables categóricas: Se refiere a la observación de las clases de cada columna (variable) y su frecuencia. ",
             className="text-description"
@@ -509,6 +519,9 @@ def eda(df, filename):
 
         html.Br(),
 
+    ]) if has_categorical is True else html.Div(),
+         
+
         html.H3("Paso 5. Identificación de relaciones entre pares variables"),
 
         html.Div(
@@ -547,21 +560,21 @@ def eda(df, filename):
     ])
 
 @callback(Output('output-data-upload', 'children'),
-              [Input('upload-data', 'contents'),
-               Input('upload-data-static', 'value')],
-              [State('upload-data', 'filename'),
-               State('upload-data', 'last_modified')])
+              [Input('upload-data-eda', 'contents'),
+               Input('upload-data-eda-static', 'value')],
+              [State('upload-data-eda', 'filename'),
+               State('upload-data-eda', 'last_modified')])
 def update_output(list_of_contents, selected_file, list_of_names, list_of_dates):
     ctx = dash.callback_context
     if not ctx.triggered:
         return None
-    if ctx.triggered[0]['prop_id'] == 'upload-data.contents':
+    if ctx.triggered[0]['prop_id'] == 'upload-data-eda.contents':
         if list_of_contents is not None:
             children = [
-                parse_contents(c, n, d) for c, n, d in
-                zip(list_of_contents, list_of_names, list_of_dates)]
+                parse_contents(c,n,d) for c,n,d in
+                zip(list_of_contents, list_of_names,list_of_dates)]
             return children
-    elif ctx.triggered[0]['prop_id'] == 'upload-data-static.value':
+    elif ctx.triggered[0]['prop_id'] == 'upload-data-eda-static.value':
         df = pd.read_csv(selected_file)
         return eda(df, selected_file)
 
