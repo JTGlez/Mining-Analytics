@@ -7,6 +7,7 @@
 #------------------------------------------------Importación de bibliotecas------------------------------------------------------------#
 import base64
 import datetime
+import numpy as np
 import io
 from io import BytesIO
 import dash # Biblioteca principal de Dash.
@@ -228,8 +229,6 @@ def eda(df, filename):
 
     categorical_histogram = create_categorical_bar_charts(df)
 
-    heatmap = create_correlation_heatmap(df)
-
     return html.Div([
 
         dbc.Alert('El archivo cargado es: {}'.format(filename), color="success"),
@@ -257,6 +256,8 @@ def eda(df, filename):
             children = "1) Dimensión del DataFrame: verificamos la estructura general de los datos observando la cantidad de filas y columnas en el dataset a explorar.", className = "text-description"
         ),
 
+        html.Br(),
+
         dbc.Row([
             dbc.Col([
                 dbc.Alert("Número de filas: {}".format(df.shape[0]))
@@ -269,9 +270,13 @@ def eda(df, filename):
             justify='center'  # Añade la propiedad justify con el valor 'center'
         ),
 
+        html.Br(),
+
         html.Div(
             children = "2) Tipos de datos: a continuación se muestran los tipos de datos detectados para el dataset a analizar.", className = "text-description"
         ),
+        
+        html.Br(),
 
         html.Div(
 
@@ -288,7 +293,7 @@ def eda(df, filename):
                     'border': '1px solid black'
                 },
                 style_table={
-                    'height': '400px',
+                    #'height': '400px',
                     'overflowY': 'auto',
                     'backgroundColor': 'rgb(230, 230, 230)'
                 },
@@ -301,7 +306,7 @@ def eda(df, filename):
                     }
                 ]
             ),
-            style={'width': '50%', 'margin': '0 auto'}
+            style={'margin': '0 auto'}
         ),
 
         html.H3("Paso 2. Identificación de datos faltantes"),
@@ -309,6 +314,8 @@ def eda(df, filename):
         html.Div(
             children = "A continuación se muestran los valores nulos detectados por cada variable en el dataset:", className = "text-description"
         ),
+
+        html.Br(),
 
         html.Div(
 
@@ -325,7 +332,7 @@ def eda(df, filename):
                     'border': '1px solid black'
                 },
                 style_table={
-                    'height': '400px',
+                    #'height': '400px',
                     'overflowY': 'auto',
                     'backgroundColor': 'rgb(230, 230, 230)'
                 },
@@ -347,15 +354,20 @@ def eda(df, filename):
             children="1) Distribución de variables numéricas: selecciona una variable numérica en el menú desplegable para ver su histograma.",
             className="text-description"
         ),
+        
+        html.Br(),
 
         html.Div([dropdown, histogram_graph]),
         dataframe_store,
 
+        html.Br(),
+
         html.Div(
-            children="2) Distribución de variables numéricas: selecciona una variable numérica en el menú desplegable para ver su histograma.",
+            children="2) Descripción estadística: a continuación se muestran los estadísticos obtenidos para el dataset analizado.",
             className="text-description"
         ),
 
+        html.Br(),
 
         html.Div(
             dash_table.DataTable(
@@ -387,20 +399,29 @@ def eda(df, filename):
                     'overflowX': 'auto'
                 },
             ),
-            style={'width': '50%', 'margin': '0 auto'}
+            style={'margin': '0 auto'}
         ),
+
+        html.Br(),
 
         html.Div(
             children="3) Diagramas para detectar valores atípicos: selecciona una variable numérica en el menú desplegable para ver su diagrama de caja.",
             className="text-description"
         ),
+
+        html.Br(),
+
         html.Div([dropdown_boxplot, boxplot_graph]),
         dataframe_store,
+
+        html.Br(),
 
         html.Div(
             children="4) Diagramas de variables categóricas: Se refiere a la observación de las clases de cada columna (variable) y su frecuencia. ",
             className="text-description"
         ),
+
+        html.Br(),
 
         html.Div(
             dash_table.DataTable(
@@ -432,7 +453,7 @@ def eda(df, filename):
                     'overflowX': 'auto'
                 },
             ),
-            style={'width': '50%', 'margin': '0 auto'}
+            style={'margin': '0 auto'}
         ),
 
         html.Div(
@@ -440,17 +461,22 @@ def eda(df, filename):
             className="text-description"
         ),
 
+        html.Br(),
+
+
         html.Div(
             dcc.Graph(figure=categorical_histogram),
             className="categorical-histogram"
         ),
+
+        html.Br(),
 
         html.Div(
             children="5) Agrupar por tipos de clases, por ejemplo, con propiedades tipo h. Se muestran específicamente promedios de cada tipo.",
             className="text-description"
         ),
 
-
+        html.Br(),
 
         html.Div([
             html.Div([
@@ -481,6 +507,8 @@ def eda(df, filename):
             for i, df in enumerate(create_categorical_tables(df))
         ], style={"display": "flex", "flex-wrap": "wrap", "width": "50%", "margin": "0 auto"}),
 
+        html.Br(),
+
         html.H3("Paso 5. Identificación de relaciones entre pares variables"),
 
         html.Div(
@@ -488,10 +516,33 @@ def eda(df, filename):
             className="text-description"
         ),
 
+        html.Br(),
+
         dcc.Graph(
-            id='heatmap',
-            figure=heatmap,
-        )
+            id='matriz',
+            figure={
+                'data': [
+                    {'x': df.corr(numeric_only=True).columns, 'y': df.corr(numeric_only=True).columns, 'z': np.triu(df.corr(numeric_only=True).values, k=1), 'type': 'heatmap', 'colorscale': 'RdBu', 'symmetric': False}
+                ],
+                'layout': {
+                    'title': 'Matriz de correlación',
+                    'xaxis': {'side': 'down'},
+                    'yaxis': {'side': 'left'},
+                    # Agregamos el valor de correlación por en cada celda (text_auto = True)
+                    'annotations': [
+                        dict(
+                            x=df.corr(numeric_only=True).columns[i],
+                            y=df.corr(numeric_only=True).columns[j],
+                            text=str(round(df.corr(numeric_only=True).values[i][j], 4)),
+                            showarrow=False,
+                            font=dict(
+                                color='white' if abs(df.corr(numeric_only=True).values[i][j]) >= 0.67  else 'black'
+                            ),
+                        ) for i in range(len(df.corr(numeric_only=True).columns)) for j in range(i)
+                    ],
+                },
+            },
+        ),
 
     ])
 
@@ -590,16 +641,6 @@ def create_categorical_tables(df):
             data_frames.append(table_df)
 
     return data_frames
-
-def create_correlation_heatmap(df):
-    corr_matrix = df.corr()
-    # Crear la gráfica de heatmap utilizando Plotly Express
-    fig = px.imshow(corr_matrix,
-                    labels=dict(x="Variables", y="Variables", color="Correlación"),
-                    x=corr_matrix.columns,
-                    y=corr_matrix.columns,
-                    color_continuous_scale='RdBu_r')
-    return fig
 
 
 
