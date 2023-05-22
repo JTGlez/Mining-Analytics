@@ -74,7 +74,7 @@ def eda_card():
     )
 
 dropdown_options = [
-    {'label': 'Dataset 1', 'value': 'assets/dt1.csv'},
+    {'label': 'Salarios de Data Science', 'value': 'data/SalariosDS.csv'},
     {'label': 'Dataset 2', 'value': 'assets/dt2.csv'},
     {'label': 'Dataset 3', 'value': 'assets/dt3.csv'}
 ]
@@ -600,5 +600,6 @@ def create_correlation_heatmap(df):
                     y=corr_matrix.columns,
                     color_continuous_scale='RdBu_r')
     return fig
+
 
 

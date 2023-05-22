@@ -32,12 +32,8 @@ from sklearn.tree import export_text
 from sklearn.tree import plot_tree
 import uuid
 
-
-
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-
-
 
 #---------------------------------------------------Definición de funciones para el front--------------------------------------------------------#
 def regtree_card():
@@ -262,7 +258,7 @@ def regtree(df, filename, columns):
         ),
 
         html.Div(
-            "Selecciona de la siguiente lista las variables que deseas elegir como predictoras y tu variable target para realizar la regresión."
+            html.P("Selecciona de la siguiente lista las variables que deseas elegir como predictoras y tu variable target para realizar la regresión.")
         ),
 
         html.Div(
@@ -275,7 +271,7 @@ def regtree(df, filename, columns):
                                     html.Div(
                                         [
                                             dbc.Badge("ⓘ Variables predictoras", color="primary",
-                                                    id="tooltip-method", style={"cursor": "pointer", "display": "flex", "align-items": "center", "justify-content": "center", "height": "100%"},
+                                                    id="tooltip-method", style={"cursor": "pointer", "display": "flex", "align-items": "center", "justify-content": "center"},
                                                     ),
                                             dbc.Tooltip(
                                                 "Selecciona aquí las variables predictoras de tu análisis.",
@@ -284,12 +280,13 @@ def regtree(df, filename, columns):
                                         ],
                                         style={"height": "50px", "padding": "0"},
                                     ),
+                                    style = {"height": "2.5em"}
                                 ),
                                 dbc.Row(
                                     dbc.Checklist(
                                         id='select-predictors',
                                         options=[{'label': col, 'value': col} for col in columns],
-                                        style={"font-size": "medium", "display": "grid", "justify-items": "start"}
+                                        style={"font-size": "small", "display": "grid", "justify-items": "start", "font-family": "Acumin, 'Helvetica Neue', sans-serif", "margin": "-1em 0 0 0"}
                                     ),
                                     style={"height": "auto"}
                                 ),
@@ -302,7 +299,7 @@ def regtree(df, filename, columns):
                                     html.Div(
                                         [
                                             dbc.Badge("ⓘ Variable Regresora", color="primary",
-                                                    id="tooltip-numpc", style={"cursor": "pointer", "display": "flex", "align-items": "center", "justify-content": "center", "height": "100%"}
+                                                    id="tooltip-numpc", style={"cursor": "pointer", "display": "flex", "align-items": "center", "justify-content": "center", "height": "100%"},
                                                     ),
                                             dbc.Tooltip(
                                                 "Selecciona la variable target de tu análisis.",
@@ -319,7 +316,7 @@ def regtree(df, filename, columns):
                                         value=None,
                                         style={"font-size": "medium"}
                                     ),
-                                    style={"height": "50px"}
+                                    style={"font-size":"small", "height": "2em", "font-family": "Acumin, 'Helvetica Neue', sans-serif"}
                                 ),
                             ],
                             class_name="me-3"
@@ -330,19 +327,29 @@ def regtree(df, filename, columns):
                 html.Div(
                     children=[
                         html.H3("Parámetros del árbol de decisión"),
-                        html.Label("Profundidad máxima del árbol (max_depth):"),
+                        html.Div(
+                            children="A continuación selecciona los parámetros que desees modificar para la generación del árbol. Si lo deseas, también es posible generar el árbol sin parámetros adicionales.",
+                            className="text-description"
+                        ),
+                        html.H5("Profundidad máxima del árbol: "),
+                        html.P("Parámetro empleado para evitar overfitting en el árbol a generar, sin embargo, una profundidad muy baja puede llevar a un underfitting. "),
                         dcc.Input(type="number", id="input-max-depth", min=1, step=1),
-                        html.Label("Número mínimo de muestras para dividir un nodo interno (min_samples_split):"),
+                        html.H5("Número mínimo de muestras para dividir un nodo interno: "),
+                        html.P("Permite indicar la cantidad mínima de datos necesarios para que un nodo de decisión pueda dividirse."),
                         dcc.Input(type="number", id="input-min-samples-split", min=2, step=1),
-                        html.Label("Número mínimo de muestras para ser una hoja (min_samples_leaf):"),
+                        html.H5("Número mínimo de muestras para una hoja:"),
+                        html.P("Permite indicar la cantidad mínima de datos que debe de tener un nodo hoja al interior del árbol."),
                         dcc.Input(type="number", id="input-min-samples-leaf", min=1, step=1),
+                        html.H5("Tamaño de la muestra:"),
+                        html.P("Permite indicar el ratio de valores en el dataset que se usarán para verificar el modelo. Generalmente 0.2 es un buen valor, pero es posible ajustarlo a 0.3 para obtener mayor representatividad."),
+                        dcc.Input(type="number", id="input-test-size", min=0.1, max = 0.5, step=0.1),
                     ],
                     style={"font-size": "20px"},
                     className="mt-4",
                 ),
                 dbc.Row(
                     dbc.Col(
-                        dbc.Button("Enviar", id="submit-button", color="primary", className="mt-3", style={"justify-content": "between", "height": "100%"}),
+                        dbc.Button("Generar árbol", id="submit-button", color="primary", className="mt-3", style={"display": "grid", "height": "80%", "align-items": "center", "margin": "0 auto"}),
                         width={"size": 2, "offset": 5},
                     ),
                     className="mt-3",
@@ -434,12 +441,32 @@ def create_comparison_chart(Y_test, Y_Predicted):
     )
     return fig
 
-def generate_decision_tree(X_train, X_test, Y_train, Y_test, max_depth=9, min_samples_split=8, min_samples_leaf=4):
+def generate_decision_tree(X_train, X_test, Y_train, Y_test, max_depth=2, min_samples_split=2, min_samples_leaf=2):
     reg_tree = DecisionTreeRegressor(
-    random_state=0,
-    max_depth=max_depth,
-    min_samples_split=min_samples_split,
-    min_samples_leaf=min_samples_leaf)
+        random_state=0,
+        max_depth=max_depth,
+        min_samples_split=min_samples_split,
+        min_samples_leaf=min_samples_leaf
+    )
+    reg_tree.fit(X_train, Y_train)
+    Y_Predicted = reg_tree.predict(X_test)
+    comparison_df = pd.DataFrame({"Y_Real": Y_test.flatten(), "Y_Pronosticado": Y_Predicted})
+
+    # Devuelve también el árbol de regresión y sus parámetros
+    tree_parameters = {
+        "criterion": reg_tree.criterion,
+        "feature_importances": reg_tree.feature_importances_,
+        "MAE": mean_absolute_error(Y_test, Y_Predicted),
+        "MSE": mean_squared_error(Y_test, Y_Predicted),
+        "RMSE": mean_squared_error(Y_test, Y_Predicted, squared=False),
+        "score": r2_score(Y_test, Y_Predicted),
+    }
+    return comparison_df, reg_tree, tree_parameters, Y_Predicted
+
+def generate_decision_treeS(X_train, X_test, Y_train, Y_test):
+    reg_tree = DecisionTreeRegressor(
+        random_state=0,
+    )
     reg_tree.fit(X_train, Y_train)
     Y_Predicted = reg_tree.predict(X_test)
     comparison_df = pd.DataFrame({"Y_Real": Y_test.flatten(), "Y_Pronosticado": Y_Predicted})
@@ -513,9 +540,6 @@ def show_prediction(n_clicks, input_form):
     return f"La predicción del precio de la acción es: {prediction[0]:.2f}"
 
 
-
-
-
 @callback(
     Output("output-data", "children"),
     Input("submit-button", "n_clicks"),
@@ -524,9 +548,10 @@ def show_prediction(n_clicks, input_form):
     State("input-max-depth", "value"),
     State("input-min-samples-split", "value"),
     State("input-min-samples-leaf", "value"),
+    State("input-test-size", "value")
 
 )
-def split_data(n_clicks, predictors, regressor, max_depth, min_samples_split, min_samples_leaf):
+def split_data(n_clicks, predictors, regressor, max_depth, min_samples_split, min_samples_leaf, test_size = 0.2):
     global global_df
     global global_predictors
     global global_regressor
@@ -545,10 +570,17 @@ def split_data(n_clicks, predictors, regressor, max_depth, min_samples_split, mi
 
     X = np.array(global_df[predictors])
     Y = np.array(global_df[[regressor]])
-    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size = 0.2, random_state = 0, shuffle = True)
-    comparison_df, reg_tree, tree_parameters, Y_Predicted = generate_decision_tree(
-        X_train, X_test, Y_train, Y_test, max_depth, min_samples_split, min_samples_leaf
-    )
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size = test_size, random_state = 0, shuffle = True)
+    
+    if max_depth is None and min_samples_split is None and min_samples_leaf is None:
+        comparison_df, reg_tree, tree_parameters, Y_Predicted = generate_decision_treeS(
+            X_train, X_test, Y_train, Y_test
+        )
+    else:
+        comparison_df, reg_tree, tree_parameters, Y_Predicted = generate_decision_tree(
+            X_train, X_test, Y_train, Y_test, max_depth, min_samples_split, min_samples_leaf
+        )
+
     global global_reg_tree 
     global_reg_tree = reg_tree
     comparison_chart = create_comparison_chart(Y_test, Y_Predicted)
