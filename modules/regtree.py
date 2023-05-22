@@ -441,7 +441,7 @@ def create_comparison_chart(Y_test, Y_Predicted):
     )
     return fig
 
-def generate_decision_tree(X_train, X_test, Y_train, Y_test, max_depth=2, min_samples_split=2, min_samples_leaf=2):
+def generate_decision_tree(X_train, X_test, Y_train, Y_test, max_depth=2, min_samples_split=4, min_samples_leaf=4):
     reg_tree = DecisionTreeRegressor(
         random_state=0,
         max_depth=max_depth,
