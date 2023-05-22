@@ -31,6 +31,7 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.tree import export_text
 from sklearn.tree import plot_tree
 import uuid
+import graphviz
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
@@ -213,7 +214,6 @@ def parse_contents(contents, filename, date):
         return html.Div([
             'There was an error processing this file.'
         ])
-
 
 def regtree(df, filename, columns):
     """
@@ -537,8 +537,26 @@ def show_prediction(n_clicks, input_form):
                 print("Claves presentes en dash.callback_context.states:", dash.callback_context.states.keys())
 
     prediction = predict_new_values(global_reg_tree, global_predictors, [input_values])
-    return f"La predicción del precio de la acción es: {prediction[0]:.2f}"
+    return f"La predicción con base en los valores introducidos es: {prediction[0]:.2f}"
 
+@callback(
+    Output("download-ar", "data"),
+    Input("btn-ar", "n_clicks"),
+    prevent_initial_call=True,
+)
+def generar_arbol_svg(n_clicks):
+    import graphviz
+    from sklearn.tree import export_graphviz
+
+    Elementos = export_graphviz(global_reg_tree,
+                            feature_names = global_predictors,
+                            filled = True,
+                            rounded = True,
+                            special_characters = True)
+    Arbol = graphviz.Source(Elementos)
+    Arbol.format = 'pdf'
+
+    return dcc.send_file(Arbol.render(filename='ArbolAR', view=True))
 
 @callback(
     Output("output-data", "children"),
@@ -569,6 +587,8 @@ def split_data(n_clicks, predictors, regressor, max_depth, min_samples_split, mi
     global_regressor = regressor
 
     X = np.array(global_df[predictors])
+    global global_X 
+    global_X = X
     Y = np.array(global_df[[regressor]])
     X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size = test_size, random_state = 0, shuffle = True)
     
@@ -602,20 +622,20 @@ def split_data(n_clicks, predictors, regressor, max_depth, min_samples_split, mi
     parameters_table = dash_table.DataTable(
         data=parameters_df.to_dict('records'),
         columns=[{'name': i, 'id': i} for i in parameters_df.columns],
-        style_table={'height': '300px', 'overflowX': 'auto'},
+        style_table={'overflowX': 'auto', "border": "none"},
     )
 
     importance_df = pd.DataFrame({'Variable': predictors, 'Importancia': tree_parameters['feature_importances']}).sort_values('Importancia', ascending=False)
     importance_table = dash_table.DataTable(
         data=importance_df.to_dict('records'),
         columns=[{'name': i, 'id': i} for i in importance_df.columns],
-        style_table={'height': '300px', 'overflowX': 'auto'},
+        style_table={'overflowX': 'auto'},
     )
 
     tree_rules = export_text(reg_tree, feature_names=predictors)
     tree_rules_container = html.Div(
         children=[html.Pre(tree_rules)],
-        style={'height': '300px', 'overflowY': 'scroll', 'border': '1px solid', 'padding': '10px'},
+        style={'height': '20em', 'overflowY': 'scroll', 'border': '1px solid', 'padding': '10px'},
     )
 
     new_forecasts_section = html.Div(
@@ -632,18 +652,35 @@ def split_data(n_clicks, predictors, regressor, max_depth, min_samples_split, mi
 
     return (
     html.H3("Generación del Árbol de Decisión:"),
-    "El árbol generado cuenta con los siguientes parámetros:",
-    comparison_table,
-    html.Br(),
-    "Parámetros del árbol:",
+    html.P("Los parámetros del árbol generado son los siguientes:"),
     parameters_table,
     html.Br(),
-    "Importancia de las variables:",
+    html.P("Se han obtenido los siguiente valores de pronóstico en el set de entrenamiento, los cuales se comparan con los valores reales:"),
+    comparison_table,
+    html.Br(),
+    html.P("A continuación se especifica la importancia numérica [0-1] de las variables predictoras en el modelo construido:"),
     importance_table,
     html.Br(),
-    "Reglas del árbol:",
+    html.P("El árbol fue construido de con las siguientes reglas:"),
     tree_rules_container,
     html.Br(),
+    html.P("A continuación, puede descargar el árbol generado con el fin de identificar si es necesario llevar a cabo un proceso de podado. Para esto, puede modificar los parámetros de generación según sea necesario."),
+    html.Br(),
+    html.Div([
+        dbc.Row(
+            dbc.Col(
+                html.Div([
+                    dbc.Button("Descargar Árbol", id="btn-ar", color="primary", className="mt-3", style={"display": "grid", "height": "80%", "align-items": "center", "margin": "0 auto"}),
+                    dcc.Download(id="download-ar")
+                ]),
+                width={"size": 2, "offset": 5},
+            ),
+            className="mt-3",
+        ),
+    ]),
+
+    html.Br(),
+    html.P("El siguiente gráfico permite comparar los valores estimados por el árbol de decisión contra los valores reales de prueba:"),
     dcc.Graph(figure=comparison_chart),
     html.Br(),
     new_forecasts_section
