@@ -17,6 +17,7 @@ import dash_bootstrap_components as dbc # Biblioteca de componentes de Bootstrap
 from modules import home, eda, pca, regtree, classtree, regforest, classforest
 import pathlib
 import numpy as np
+import plotly.matplotlylib as mpl_plotly
 import plotly.express as px
 import plotly.graph_objects as go
 import dash_table
@@ -35,6 +36,11 @@ from sklearn.tree import export_text
 from sklearn.tree import plot_tree
 import uuid
 import graphviz
+from sklearn.metrics import RocCurveDisplay
+from sklearn.metrics import roc_curve, auc
+from sklearn import metrics
+from sklearn.preprocessing import label_binarize
+
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
@@ -58,25 +64,37 @@ def classtree_card():
             html.H5("Mining Analytics"), # Título de página.
             html.H3("Árbol de Decisión: Clasificación"), # Subtítulo.
             # Texto que explica la temática de la página web.
+            # Texto que explica la temática de la página web.
             html.Div(
                 id="intro",
-                children="Explicación arbol clasificacion"
+                children="Los árboles de decisión representan uno de los algoritmos de aprendizaje supervisado más utilizados, los cuales soportan tanto valores numéricos como nominales. Para esto, se construye una estructura jerárquica que divide los datos en función de condicionales."
                 ,
             ),
-            # Texto secundario de explicacion.
-            html.Div(
-                id="intro2",
-                children = "En esta sección podrás llevar a cabo este procedimiento de forma automatizada cargando uno de los datasets de prueba, o bien, cargando tu propio dataset."
-            ),
 
-            # Muestra una figura de exploración (GIF de lupa)
             html.Div(
                 style={'display': 'flex', 'align-items': 'center', 'justify-content': 'center', 'height': '20em'},
                 children=[
                     html.Img(
-                        id="eda",
-                        src="/assets/eda.gif",
+                        id="tree1",
+                        src="/assets/tree1.png",
                         style = {'width': '25em', 'height': '15em'}
+                    )
+                ]
+            ),
+            # Texto secundario de explicacion.
+            html.Div(
+                id="intro2",
+                children = "Si bien los árboles son una opción muy noble para el modelado de datos, estos tienden a tener problemas de sobreajuste excesivo en los datos. Por ello, es necesario que se consideren cuidadosamente los hiperparámetros de elección para la generación del modelo. A continuación se muestran los parámetros que deben considerarse:"
+            ),
+
+            # Muestra una figura de parámetros del árbol
+            html.Div(
+                style={'display': 'flex', 'align-items': 'center', 'justify-content': 'center', 'height': '15em'},
+                children=[
+                    html.Img(
+                        id="tree2",
+                        src="/assets/tree2.png",
+                        style = {'width': '35em', 'height': '10em'}
                     )
                 ]
             ),
@@ -397,10 +415,7 @@ def generate_decision_tree(X_train, X_test, Y_train, Y_test, max_depth=2, min_sa
     tree_parameters = {
         "criterion": class_tree.criterion,
         "feature_importances": class_tree.feature_importances_,
-        "MAE": mean_absolute_error(Y_test, Y_Predicted),
-        "MSE": mean_squared_error(Y_test, Y_Predicted),
-        "RMSE": mean_squared_error(Y_test, Y_Predicted, squared=False),
-        "score": r2_score(Y_test, Y_Predicted),
+        "Exactitud": accuracy_score(Y_test, Y_Predicted),
     }
     return comparison_df, class_tree, tree_parameters, Y_Predicted
 
@@ -540,10 +555,10 @@ def split_data(n_clicks, predictors, regressor, max_depth, min_samples_split, mi
     global global_class_tree 
     global_class_tree = class_tree
 
-    
+    comparison_df.columns = comparison_df.columns.astype(str)
     comparison_table = dash_table.DataTable(
         data=comparison_df.to_dict('records'),
-        columns=[{'name': i, 'id': i} for i in comparison_df.columns],
+        columns=[{'name': i, 'id': i} for i in comparison_df.columns.astype(str)],
         style_table={'height': '300px', 'overflowX': 'auto'},
     )
 
@@ -556,14 +571,49 @@ def split_data(n_clicks, predictors, regressor, max_depth, min_samples_split, mi
     parameters_df = pd.DataFrame(parameters_list)
     parameters_table = dash_table.DataTable(
         data=parameters_df.to_dict('records'),
-        columns=[{'name': i, 'id': i} for i in parameters_df.columns],
+        columns=[{'name': i, 'id': i} for i in parameters_df.columns.astype(str)],
+        style_table={'overflowX': 'auto', "border": "none"},
+    )
+
+    # Calcular el informe de clasificación
+    report = classification_report(Y_test, Y_Predicted, output_dict=True)
+
+    # Crear un DataFrame de Pandas con los datos del informe de clasificación
+    report_df = pd.DataFrame(report).transpose().round(2)
+
+    # Reiniciar el índice y renombrar la columna de índice
+    report_df = report_df.reset_index().rename(columns={'index': 'Metric'})
+
+    report_table = dash_table.DataTable(
+        data=report_df.to_dict('records'),
+        columns=[{'name': i, 'id': i} for i in report_df.columns.astype(str)],
         style_table={'overflowX': 'auto', "border": "none"},
     )
 
     importance_df = pd.DataFrame({'Variable': predictors, 'Importancia': tree_parameters['feature_importances']}).sort_values('Importancia', ascending=False)
     importance_table = dash_table.DataTable(
         data=importance_df.to_dict('records'),
-        columns=[{'name': i, 'id': i} for i in importance_df.columns],
+        columns=[{'name': i, 'id': i} for i in importance_df.columns.astype(str)],
+        style_table={'overflowX': 'auto'},
+    )
+    # Calcular la matriz de clasificación
+    ModeloClasificacion1 = global_class_tree.predict(X_test)
+    class_matrix = pd.crosstab(Y_test.ravel(), 
+                            ModeloClasificacion1, 
+                            rownames=['Reales'], 
+                            colnames=['Clasificación']) 
+
+    # Columna con los nombres de los valores de predicción posibles
+    class_matrix[' '] = [''] * len(class_matrix)
+    for column in class_matrix.columns[:-1]:
+        class_matrix[' '][class_matrix.columns.get_loc(column)] = column
+
+    # Reiniciar el índice
+    class_matrix = class_matrix.reset_index()
+
+    class_matrix_table = dash_table.DataTable(
+        data=class_matrix.to_dict('records'),
+        columns=[{'name': i, 'id': i} for i in class_matrix.columns.astype(str)],
         style_table={'overflowX': 'auto'},
     )
 
@@ -572,6 +622,56 @@ def split_data(n_clicks, predictors, regressor, max_depth, min_samples_split, mi
         children=[html.Pre(tree_rules)],
         style={'height': '20em', 'overflowY': 'scroll', 'border': '1px solid', 'padding': '10px'},
     )
+
+    # Binarizar las etiquetas de la prueba
+    unique_classes = np.unique(Y_test)
+    print(unique_classes)
+    y_test_bin = label_binarize(Y_test, classes=unique_classes)
+    y_score = global_class_tree.predict_proba(X_test)
+    n_classes = y_test_bin.shape[1]
+    print(n_classes)
+    class_size = len(unique_classes)
+
+    # Verificar si la clasificación es binaria o multiclase
+    if class_size == 2:
+        # Caso binario
+        fig, ax = plt.subplots()
+        buf = io.BytesIO() # in-memory files
+        RocCurveDisplay.from_estimator(global_class_tree,
+                                    X_test,
+                                    Y_test,
+                                    ax=ax)
+        plt.savefig(buf, format = "png")
+        plt.close()
+        data = base64.b64encode(buf.getbuffer()).decode("utf8") # encode to html elements
+        buf.close()
+        roc_graph = "data:image/png;base64,{}".format(data)
+
+    else:
+        # Caso multiclase
+        fpr = dict()
+        tpr = dict()
+        roc_auc = dict()
+
+        buf = io.BytesIO()  # in-memory files
+        for i in range(n_classes):
+            fpr[i], tpr[i], _ = roc_curve(y_test_bin[:, i], y_score[:, i])
+            plt.plot(fpr[i], tpr[i], lw=2, label='AUC para la clase {}: {:.2f}'.format(i + 1, auc(fpr[i], tpr[i])))
+
+        plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+        plt.xlim([0.0, 1.0])
+        plt.ylim([0.0, 1.05])
+        plt.xlabel('False Positive Rate')
+        plt.ylabel('True Positive Rate')
+        plt.title('Rendimiento')
+        plt.legend(loc="lower right")  # Añade la leyenda en la esquina inferior derecha
+        plt.savefig(buf, format="png")
+        plt.close()
+        data = base64.b64encode(buf.getbuffer()).decode("utf8")  # encode to html elements
+        buf.close()
+        roc_graph = "data:image/png;base64,{}".format(data)
+
+
 
     new_forecasts_section = html.Div(
         [
@@ -590,11 +690,21 @@ def split_data(n_clicks, predictors, regressor, max_depth, min_samples_split, mi
     html.P("Los parámetros del árbol generado son los siguientes:"),
     parameters_table,
     html.Br(),
+    report_table,
+    html.Br(),
     html.P("Se han obtenido los siguiente valores de pronóstico en el set de entrenamiento, los cuales se comparan con los valores reales:"),
     comparison_table,
     html.Br(),
+    html.P("La matriz de clasificación obtenida permite identificar en qué observaciones el modelo acertó y en cuáles falló."),
+    class_matrix_table,
+    html.Br(),
     html.P("A continuación se especifica la importancia numérica [0-1] de las variables predictoras en el modelo construido:"),
     importance_table,
+    html.P('A continuación se muestra la curva ROC del árbol de decisión:'),
+    html.Div(
+        children = html.Img(id='roc-curve', src=roc_graph),
+        style = {"display": "grid", "justify-content": "center"}
+    ),
     html.Br(),
     html.P("El árbol fue construido de con las siguientes reglas:"),
     tree_rules_container,
