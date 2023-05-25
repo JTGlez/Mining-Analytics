@@ -560,7 +560,7 @@ def regforest(df, filename, columns):
                         ],
                         style={"display": "flex", "justify-content": "center"},
                     ),
-                    html.Div(id="output-data", style = {"margin-top": "1em"}),
+                    html.Div(id="output-data-regforest", style = {"margin-top": "1em"}),
                 ],
             ),
         ]
@@ -680,7 +680,7 @@ def create_input_form(predictors):
     return input_form
 
 
-@callback(Output("input-form", "children"), Input("submit-button", "n_clicks"))
+@callback(Output("input-form-forest", "children"), Input("submit-button", "n_clicks"))
 def update_input_form(n_clicks):
     if n_clicks is None:
         return ""
@@ -692,9 +692,9 @@ def predict_new_values(reg_tree, predictors, input_values):
     return prediction
 
 @callback(
-    Output("prediction-result", "children"),
+    Output("prediction-result-regforest", "children"),
     Input("predict-button", "n_clicks"),
-    State("input-form", "children"),
+    State("input-form-forest", "children"),
 )
 def show_prediction(n_clicks, input_form):
     if n_clicks is None or input_form is None:
@@ -721,7 +721,7 @@ def show_prediction(n_clicks, input_form):
 
 # CALLBACK PARA CALCULAR EL ÁRBOL Y GENERAR LAS TABS PARA MOSTRAR LOS RESULTADOS
 @callback(
-    Output("output-data", "children"),
+    Output("output-data-forest", "children"),
     Input("submit-button", "n_clicks"),
     State("select-predictors", "value"),
     State("select-regressor", "value"),
@@ -806,9 +806,9 @@ def create_model(n_clicks, predictors, regressor, max_depth, min_samples_split, 
         [
             html.H3("Generar nuevos pronósticos"),
             html.P("Introduce los valores de las variables predictoras:"),
-            html.Div(id="input-form"),
+            html.Div(id="input-form-forest"),
             html.Button("Predecir", id="predict-button", className="mt-3"),
-            html.Div(id="prediction-result", className="mt-4"),
+            html.Div(id="prediction-result-forest", className="mt-4"),
         ],
         className="mt-4",
     )
