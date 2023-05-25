@@ -721,7 +721,7 @@ def show_prediction(n_clicks, input_form):
 
 # CALLBACK PARA CALCULAR EL ÁRBOL Y GENERAR LAS TABS PARA MOSTRAR LOS RESULTADOS
 @callback(
-    Output("output-data-forest", "children"),
+    Output("output-data-regforest", "children"),
     Input("submit-button", "n_clicks"),
     State("select-predictors", "value"),
     State("select-regressor", "value"),
@@ -801,6 +801,8 @@ def create_model(n_clicks, predictors, regressor, max_depth, min_samples_split, 
         columns=[{'name': i, 'id': i} for i in importance_df.columns],
         style_table={'overflowX': 'auto'},
     )
+
+    
 
     new_forecasts_section = html.Div(
         [
