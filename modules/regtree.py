@@ -633,42 +633,19 @@ def generate_decision_treeS(X_train, X_test, Y_train, Y_test):
 
 def create_input_form(predictors):
     input_form = []
-    tab_list = []
-
     for predictor in predictors:
-        tab_list.append(
-            dbc.Tab(
-                children=[
-                    html.Div(
-                        [
-                            html.Label(predictor),
-                            dcc.Input(
-                                type="number",
-                                id=f"input-{predictor}",  # Agrega el atributo id a la entrada
-                            ),
-                        ],
-                        className="form-group",
-                    )
+        input_form.append(
+            html.Div(
+                [
+                    html.Label(predictor),
+                    dcc.Input(
+                        type="number",
+                        id=f"input-{predictor}",  # Agrega el atributo id a la entrada
+                    ),
                 ],
-                label=predictor,
-                tab_id=f"input-{predictor}",
-                tab_style={"width": "auto"},
+                className="form-group",
             )
         )
-
-    input_form.append(
-        html.Div(
-            [
-                dbc.Tabs(
-                    tab_list,
-                    id="tabs",
-                    active_tab=f"input-{predictors[0]}",
-                    style={"margin-top": "45px"},
-                ),
-            ],
-        )
-    )
-
     return input_form
 
 
