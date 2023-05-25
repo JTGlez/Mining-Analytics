@@ -117,9 +117,9 @@ def classtree_card():
     )
 
 dropdown_options = [
-    {'label': 'Dataset 1', 'value': 'assets/dt1.csv'},
-    {'label': 'Dataset 2', 'value': 'assets/dt2.csv'},
-    {'label': 'Dataset 3', 'value': 'assets/dt3.csv'}
+    {'label': 'Iris Flowers Dataset', 'value': 'data/class/IrisFlowers.csv'},
+    {'label': 'Diabetes', 'value': 'data/class/Diabetes.csv'},
+    {'label': 'Cardiotograma', 'value': 'data/class/Cardiotocograma.csv'}
 ]
 
 
