@@ -352,6 +352,8 @@ def eda(df, filename):
                                     children="A continuación se muestran los valores nulos detectados por cada variable en el dataset:", className="text-description"
                                 ),
 
+                                dbc.Alert("ⓘ Las columnas detectadas con valores nulos se marcarán en naranja.", color="warning"),
+
                                 html.Br(),
 
                                 html.Div(
