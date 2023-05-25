@@ -74,7 +74,7 @@ def regforest_card():
             # Texto secundario de explicacion.
             html.Div(
                 id="intro2",
-                children = "En esta sección podrás llevar a cabo este procedimiento de forma automatizada cargando uno de los datasets de prueba, o bien, cargando tu propio dataset."
+                children = "En esta sección podrás llevar a cabo este procedimiento de forma automatizada cargando tu propio dataset o cargando los históricos de algún activo (Stock, Criptos, etc.) recuperados directamente desde Yahoo Finance."
             ),
 
             # Muestra una GIF
@@ -83,7 +83,7 @@ def regforest_card():
                 children=[
                     html.Img(
                         id="eda",
-                        src="https://editor.analyticsvidhya.com/uploads/15391random_forest_gif.gif",
+                        src="https://miro.medium.com/v2/resize:fit:960/1*w-b0xHDoUsCcwx4nY3x5Og.gif",
                         style = {'width': '80%', 'height': '80%'}
                     )
                 ]
@@ -114,7 +114,7 @@ regforest.layout = html.Div(
                     className="four columns",
                     children=html.Div(
                         [
-                            html.H4("Carga o elige el dataset para iniciar la regresión con Bosques Aleatorios", className="text-upload"),
+                            html.H4("Carga el dataset para iniciar la regresión con Bosques Aleatorios", className="text-upload"),
                             # Muestra el módulo de carga
                             dcc.Upload(
                                 id='upload-data-regforest',
@@ -145,13 +145,14 @@ regforest.layout = html.Div(
                                 "O utiliza como datos de entrada los históricos de algún activo (Stocks, Criptomonedas o Index)",
                                 style = {
                                     'text-align': 'center',
+                                    'font-size':'18px',
                                 }
                             ),
                             dbc.InputGroup(
                                 [
                                     dbc.Input(
                                         id='ticker-input',
-                                        placeholder='Ingrese el ticker aqui',
+                                        placeholder='Ingrese el ticker aquí',
                                         style={
                                             'font-size':'16px',
                                         }
@@ -168,8 +169,8 @@ regforest.layout = html.Div(
                                     ),
                                 ],
                                 style={
-                                    'width':'50%',
-                                    'margin': '0 auto',
+                                    'width':'25%',
+                                    'margin': '20px auto',
                                 }
                             ),
                             html.Div(id = 'output-data-upload-regforest'),
@@ -182,19 +183,18 @@ regforest.layout = html.Div(
 )
 
 def parse_contents(contents, filename, date):
-
     content_type, content_string = contents.split(',')
     decoded = base64.b64decode(content_string)
     try:
         if 'csv' in filename:
         # Assume that the user uploaded a CSV file
             df = pd.read_csv(
-                io.StringIO(decoded.decode('utf-8')))
-            return regforest(df, filename)
+                io.StringIO(decoded.decode('utf-8')), index_col=None)
+            return regforest(df, filename, df.columns)
         elif 'xls' in filename:
         # Assume that the user uploaded an excel file
             df = pd.read_excel(io.BytesIO(decoded))
-            return regforest(df, filename)
+            return regforest(df, filename, df.columns)
     except Exception as e:
         print(e)
         return html.Div([
@@ -248,25 +248,322 @@ def regforest(df, filename, columns):
     fig = create_yahoo_finance_chart(df, filename)
 
     # Div de visualización en el layout.
-    return html.Div([
+    return html.Div(
+        [
+            dbc.Alert('El archivo cargado es: {}'.format(filename), color="success"),
+            # Solo mostramos las primeras 5 filas del dataframe, y le damos estilo para que las columnas se vean bien
+            dash_table.DataTable(
+                data=df.to_dict('records'),
+                page_size=8,
+                filter_action='native',
+                sort_action='native',
+                sort_mode='multi',
+                column_selectable='single',
+                row_deletable=True,
+                cell_selectable=True,
+                editable=True,
+                row_selectable='multi',
+                columns=[{'name': i, 'id': i, "deletable":True} for i in df.columns],
+                style_table={'height': '300px', 'overflowX': 'auto'},
+            ),
 
-        dbc.Alert('El archivo cargado es: {}'.format(filename), color="success"),
-        # Solo mostramos las primeras 5 filas del dataframe, y le damos estilo para que las columnas se vean bien
-        dash_table.DataTable(
-            data=df.to_dict('records'),
-            page_size=8,
-            filter_action='native',
-            sort_action='native',
-            sort_mode='multi',
-            column_selectable='single',
-            row_deletable=True,
-            cell_selectable=True,
-            editable=True,
-            row_selectable='multi',
-            columns=[{'name': i, 'id': i, "deletable":True} for i in df.columns],
-            style_table={'height': '300px', 'overflowX': 'auto'},
-        ),
-    ])
+            dcc.Graph(
+                id='yahoo-finance-chart',
+                figure = fig
+            ),
+
+            html.H3(
+                "Elección de Variables Predictoras y Dependiente",
+                style={'margin-top': '30px'}
+            ),
+
+            html.Div(
+                html.P("Selecciona de la siguiente lista las variables que deseas elegir como predictoras y tu variable target para realizar la regresión.")
+            ),
+            html.Div(
+                children=[
+                    dcc.Store(id="original-options", data=[{'label': col, 'value': col} for col in df.columns]),
+                    dbc.Row(
+                        [
+                            dbc.Col(
+                                [
+                                    dbc.Row(
+                                        html.Div(
+                                            [
+                                                dbc.Badge("ⓘ Variables predictoras", color="primary",
+                                                        id="tooltip-predictoras", style={"cursor": "pointer", "display": "flex", "align-items": "center", "justify-content": "center", "height": "100%", 'font-size':'16px'},
+                                                        ),
+                                                dbc.Tooltip(
+                                                    "Características o atributos que se utilizan como entrada para predecir o estimar el valor de la variable objetivo o variable regresora.",
+                                                    target="tooltip-predictoras", style={"font-size":"10px"},
+                                                ),
+                                            ],
+                                            style={"height": "50px", "padding": "0"},
+                                        ),
+                                    ),
+                                    dbc.Row(
+                                        dbc.Checklist(
+                                            id='select-predictors',
+                                            options = [{'label': col, 'value': col} for col in df.columns],
+                                            style={"font-size": "14px", "display": "grid", "justify-items": "start", 'border':'1px solid #e1e1e1', 'border-radius':'5px', 'background-color':'white'}
+                                        ),
+                                        style={"height": "auto"}
+                                    ),
+                                ],
+                                class_name="me-3"
+                            ),
+                            dbc.Col(
+                                [
+                                    dbc.Row(
+                                        html.Div(
+                                            [
+                                                dbc.Badge("ⓘ Variable regresora", color="primary",
+                                                        id="tooltip-regresora", style={"cursor": "pointer", "display": "flex", "align-items": "center", "justify-content": "center", "height": "100%", 'font-size':'16px'},
+                                                        ),
+                                                dbc.Tooltip(
+                                                    "Es la variable objetivo que se intenta predecir o estimar utilizando las variables predictoras como entrada.",
+                                                    target="tooltip-regresora", style={"font-size":"10px"}
+                                                ),
+                                            ],
+                                            style={"height": "50px", "padding": "0"},
+                                        ),
+                                    ),
+                                    dbc.Row(
+                                        dbc.Checklist(
+                                            id='select-regressor',
+                                            options = [{'label': col, 'value': col} for col in df.columns],
+                                            style={"font-size": "14px", "display": "grid", "justify-items": "start", 'border':'1px solid #e1e1e1', 'border-radius':'5px', 'background-color':'white'}
+                                        ),
+                                    ),
+                                ],
+                                class_name="me-3"
+                            ),
+                        ],
+                        style={"justify-content": "between", "height": "100%"}
+                    ),
+
+                     html.H3(
+                        "Generación del Modelo"
+                    ),
+                    html.P(
+                        "Una vez que hayas identificado las variables predictoras y la variable objetivo, el siguiente paso consiste en configurar los parámetros necesarios para que el modelo funcione correctamente."
+                    ),
+                    html.P(
+                        "Al terminar, presiona sobre el botón rojo para observar los resultados."
+                    ),
+                    dbc.Alert(
+                        "ⓘ Es posible dejar vacíos los campos que controlan los parámetros de los árboles de decisión que se utilizarán en el bosque. Sin embargo, es importante tener en cuenta que esto puede aumentar el consumo de recursos y potencialmente llevar a un modelo sobreajustado.", color="warning", style={"font-size": "10px", 'margin-bottom': '0px'}
+                    ),
+
+                    # Div para los parámetros del Bosque
+                    html.Div(
+                        children=[
+                            dbc.Row(
+                                [
+                                    dbc.Col(
+                                        [
+                                            dbc.Row(
+                                                html.Div(
+                                                    [
+                                                        dbc.Badge("ⓘ Profundad máxima de los árboles", color="primary",
+                                                            id="tooltip-depht", style={"cursor":"pointer", "display": "flex", "align-items": "center", "justify-content": "center", "height": "100%"}
+                                                        ),
+                                                        dbc.Tooltip(
+                                                            [
+                                                                dcc.Markdown('''
+                                                                    **📏 Max Depth:**  
+                                                                    Indica la máxima profundidad a la cual puede llegar el árbol. Esto ayuda a combatir el overfitting, pero también puede provocar underfitting.
+                                                                ''', style={'text-align': 'left'}),
+                                                            ],
+                                                            target="tooltip-depht", placement="left", style={"font-size":"10px"},
+                                                        ),
+                                                    ],
+                                                    style={"height":"50px", "padding": "0"},
+                                                ),
+                                            ),
+                                            dbc.Row(
+                                                dbc.Input(
+                                                    id='input-max-depth',
+                                                    type='number',
+                                                    placeholder='None',
+                                                    min=1,
+                                                    step=1,
+                                                    style={"font-size": "medium"}
+                                                ),
+                                                style={"height":"50px"}
+                                            ),
+                                        ],
+                                        class_name="me-3", style={'flex':'1 0 25%'}
+                                    ),
+
+                                    dbc.Col(
+                                        [
+                                            dbc.Row(
+                                                html.Div(
+                                                    [
+                                                        dbc.Badge("ⓘ Muestras mínimas de división", color="primary",
+                                                            id="tooltip-div", style={"cursor":"pointer", "display": "flex", "align-items": "center", "justify-content": "center", "height": "100%"}
+                                                        ),
+                                                        dbc.Tooltip(
+                                                            [
+                                                                dcc.Markdown('''
+                                                                    **✂️ Min Samples Split:**  
+                                                                    Indica la cantidad mínima de datos para que un nodo de decisión se pueda dividir. Si la cantidad no es suficiente este nodo se convierte en un nodo hoja.
+                                                                ''', style={'text-align': 'left'}),
+                                                            ],
+                                                            target="tooltip-div", placement="left", style={"font-size":"10px"},
+                                                        ),
+                                                    ],
+                                                    style={"height":"50px", "padding": "0"},
+                                                ),
+                                            ),
+                                            dbc.Row(
+                                                dbc.Input(
+                                                    id='input-min-samples-split',
+                                                    type='number',
+                                                    placeholder='None',
+                                                    min=1,
+                                                    step=1,
+                                                    style={"font-size": "medium"}
+                                                ),
+                                                style={"height":"50px"}
+                                            ),
+                                        ],
+                                        class_name="me-3", style={'flex':'1 0 25%'}
+                                    ),
+
+                                    dbc.Col(
+                                        [
+                                            dbc.Row(
+                                                html.Div(
+                                                    [
+                                                        dbc.Badge("ⓘ Muestras mínimas por hoja", color="primary",
+                                                            id="tooltip-leaf", style={"cursor":"pointer", "display": "flex", "align-items": "center", "justify-content": "center", "height": "100%"}
+                                                        ),
+                                                        dbc.Tooltip(
+                                                            [
+                                                                dcc.Markdown('''
+                                                                    **🍃 Min Samples Leaf:**  
+                                                                    Indica la cantidad mínima de datos que debe tener un nodo hoja.
+                                                                ''', style={'text-align': 'left'}),
+                                                            ],
+                                                            target="tooltip-leaf", placement="left", style={"font-size":"10px"},
+                                                        ),
+                                                    ],
+                                                    style={"height":"50px", "padding": "0"},
+                                                ),
+                                            ),
+                                            dbc.Row(
+                                                dbc.Input(
+                                                    id='input-min-samples-leaf',
+                                                    type='number',
+                                                    placeholder='None',
+                                                    min=1,
+                                                    step=1,
+                                                    style={"font-size": "medium"}
+                                                ),
+                                                style={"height":"50px"}
+                                            ),
+                                        ],
+                                        class_name="me-3", style={'flex':'1 0 25%'}
+                                    ),
+
+                                    dbc.Col(
+                                        [
+                                            dbc.Row(
+                                                html.Div(
+                                                    [
+                                                        dbc.Badge("ⓘ Tamaño de la muestra", color="primary",
+                                                            id="tooltip-sample", style={"cursor":"pointer", "display": "flex", "align-items": "center", "justify-content": "center", "height": "100%"}
+                                                        ),
+                                                        dbc.Tooltip(
+                                                            [
+                                                                dcc.Markdown('''
+                                                                    **Tamaño de la muestra**  
+                                                                    Indica el tamaño del conjunto de datos original que se utilizará para verificar el rendimiento del modelo. Por defecto se utiliza una división '80/20' en la que el 80% de los datos originales se utilizan para entrenar el modelo y el 20% restante para validarlo.
+                                                                ''', style={'text-align': 'left'}),
+                                                            ],
+                                                            target="tooltip-sample", placement="left", style={"font-size":"10px"},
+                                                        ),
+                                                    ],
+                                                    style={"height":"50px", "padding": "0"},
+                                                ),
+                                            ),
+                                            dbc.Row(
+                                                dbc.Input(
+                                                    id='input-test-size',
+                                                    type='number',
+                                                    placeholder='None',
+                                                    value=0.2,
+                                                    min=0.2,
+                                                    max = 0.5,
+                                                    step=0.1,
+                                                    style={"font-size": "medium"}
+                                                ),
+                                                style={"height":"50px"}
+                                            ),
+                                        ],
+                                        class_name="me-3", style={'flex':'1 0 25%'}
+                                    ),
+
+                                    dbc.Col(
+                                        [
+                                            dbc.Row(
+                                                html.Div(
+                                                    [
+                                                        dbc.Badge("ⓘ Número de Estimadores", color="primary",
+                                                            id="tooltip-estimators", style={"cursor":"pointer", "display": "flex", "align-items": "center", "justify-content": "center", "height": "100%"}
+                                                        ),
+                                                        dbc.Tooltip(
+                                                            [
+                                                                dcc.Markdown('''
+                                                                    **🌳🌳 Número de Estimadores:**  
+                                                                    Indica el número de árboles que va a tener el bosque aleatorio. Normalmente,
+                                                                    cuantos más árboles es mejor, pero a partir de cierto punto deja de mejorar y se vuelve más lento.
+                                                                    El valor por defecto es 100 árboles.
+                                                                ''', style={'text-align': 'left'}),
+                                                            ],
+                                                            target="tooltip-estimators", placement="left", style={"font-size":"10px"},
+                                                        ),
+                                                    ],
+                                                    style={"height":"50px", "padding": "0"},
+                                                ),
+                                            ),
+                                            dbc.Row(
+                                                dbc.Input(
+                                                    id='input-estimators',
+                                                    type='number',
+                                                    value=100,
+                                                    min=100,
+                                                    max=200,
+                                                    step=10,
+                                                    style={"font-size": "medium"}
+                                                ),
+                                                style={"height":"50px"}
+                                            ),
+                                        ],
+                                        class_name="me-3", style={'flex':'1 0 25%'}
+                                    ),
+                                ],
+                                style={"justify-content": "between", "height": "100%"}
+                            ),
+                        ],
+                        style={"font-size":"20px", "margin":"20px 0"}
+                    ),
+                    html.Div(
+                        children=
+                        [
+                            dbc.Button(
+                                "Generar Bosque", id="submit-button", color="danger", style={"width":"40%"},
+                            ),
+                        ],
+                        style={"display": "flex", "justify-content": "center"},
+                    ),
+                    html.Div(id="output-data", style = {"margin-top": "1em"}),
+                ],
+            ),
+        ]
+    )
 
 @callback(Output('output-data-upload-regforest', 'children'),
           [Input('upload-data-regforest', 'contents'),
@@ -278,7 +575,7 @@ def update_output(list_of_contents, submit_ticker_clicks, list_of_names, list_of
     ctx = dash.callback_context
     if not ctx.triggered:
         return None
-    if ctx.triggered[0]['prop_id'] == 'upload-data-regtree.contents':
+    if ctx.triggered[0]['prop_id'] == 'upload-data-regforest.contents':
         if list_of_contents is not None:
             children = [
                 parse_contents(c, n, d) for c, n, d in
@@ -290,5 +587,5 @@ def update_output(list_of_contents, submit_ticker_clicks, list_of_names, list_of
             return regforest(df, ticker, df.columns)
         else:
             return html.Div([
-                dbc.Alert('Primero escribe un Ticker, por ejemplo: "AAPL" (Apple), "MSFT" (Microsoft), "GOOGL" (Google), etc. ', color="danger")
+                dbc.Alert('ⓘ Primero escribe un Ticker, por ejemplo: "AAPL" (Apple), "MSFT" (Microsoft), "GOOGL" (Google), etc. ', color="danger")
             ])
