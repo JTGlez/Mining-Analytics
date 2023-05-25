@@ -97,9 +97,9 @@ def eda_card():
 
 # Datasets predeterminados.
 dropdown_options = [
-    {'label': 'Salarios de Data Science', 'value': 'data/SalariosDS.csv'},
-    {'label': 'Dataset 2', 'value': 'assets/dt2.csv'},
-    {'label': 'Dataset 3', 'value': 'assets/dt3.csv'}
+    {'label': 'Automóviles', 'value': 'data/eda/Automoviles.csv'},
+    {'label': 'Salarios de Data Science', 'value': 'data/eda/SalariosDS.csv'},
+    {'label': 'Riesgo Crediticio', 'value': 'data/eda/RiesgoCrediticio.csv'}
 ]
 
 
@@ -341,7 +341,7 @@ def eda(df, filename):
                                     style={'margin': '0 auto'}
                                 ),
                             ],
-                            label="Paso 1", tab_id="tab-1", tab_style={"width": "auto"}),
+                            label="Descripción de la estructura de los datos", tab_id="tab-1", tab_style={"width": "auto"}),
 
                         dbc.Tab(
                             children=[
@@ -352,7 +352,9 @@ def eda(df, filename):
                                     children="A continuación se muestran los valores nulos detectados por cada variable en el dataset:", className="text-description"
                                 ),
 
-                                dbc.Alert("ⓘ Las columnas detectadas con valores nulos se marcarán en naranja.", color="warning"),
+                                html.Br(),
+
+                                dbc.Alert("ⓘ Las columnas detectadas con valores nulos se marcarán en naranja.", color="warning", style = {'display': 'inline-block'}),
 
                                 html.Br(),
 
@@ -392,7 +394,7 @@ def eda(df, filename):
                                     style={'width': '50%', 'margin': '0 auto'}
                                 )
                             ],
-                            label="Paso 2", tab_id="tab-2", tab_style={"width": "auto"}),
+                            label="Identificación de valores nulos", tab_id="tab-2", tab_style={"width": "auto"}),
 
 
                         dbc.Tab(
@@ -542,35 +544,31 @@ def eda(df, filename):
                                                 columns=[{"name": col, "id": col} for col in df.columns],
                                                 data=df.to_dict("records"),
                                                 style_cell={
-                                                    "textAlign": "left", "padding": "1em 1em 1em 1em"},
-                                                style_header={
-                                                    "backgroundColor": "royalblue",
-                                                    "color": "white",
-                                                    "textAlign": "left"
+                                                    'textAlign': 'left',
+                                                    'padding': '1em'
                                                 },
-                                                style_data_conditional=[
-                                                    {
-                                                        "if": {"row_index": "odd"},
-                                                        "backgroundColor": "white"
-                                                    },
-                                                    {
-                                                        "if": {"row_index": "even"},
-                                                        "backgroundColor": "paleturquoise"
-                                                    }
-                                                ],
-                                                css=[
-                                                    {"selector": ".dash-spreadsheet", "rule": "table-layout: auto"}],
+                                                style_header={
+                                                    'fontWeight': 'bold',
+                                                    'backgroundColor': 'rgb(230, 230, 230)',
+                                                    'border': '1px solid black'
+                                                },
+                                                style_table={
+                                                    # 'height': '400px',
+                                                    'overflowY': 'auto',
+                                                    'backgroundColor': 'rgb(230, 230, 230)'
+                                                }
                                             )
                                         ], style={"width": "100%", "max-width": "100%", "margin": '0 auto', 'overflowX': 'scroll'})  # No agrega desplazamiento horizontal
                                         for i, df in enumerate(create_categorical_tables(df))
-                                    ], style={"display": "flex", "flex-wrap": "wrap", "width": "100%", "max-width": "100%", "margin": "0 auto"}),
+                                        
+                                    ], style={'width': '75%', 'margin': '0 auto'}),
 
 
                                     html.Br(),
 
                                 ]) if has_categorical is True else html.Div(),  # Si no hay variables categóricas, no se muestran ni se crean los histogramas ni descripciones estadísticas de esa clase de variables.
                             ],
-                            label="Paso 3", tab_id="tab-3", tab_style={"width": "auto"}
+                            label="Detección de valores atípicos", tab_id="tab-3", tab_style={"width": "auto"}
                         ),
 
                         dbc.Tab(
@@ -616,7 +614,7 @@ def eda(df, filename):
                                     },
                                 )
                             ],
-                            label="Paso 4", tab_id="tab-4", tab_style={"width": "auto"}
+                            label="Identificación de relaciones entre pares variables", tab_id="tab-4", tab_style={"width": "auto"}
 
                         ),
 

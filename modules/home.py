@@ -16,6 +16,8 @@ import dash_bootstrap_components as dbc
 from modules import home, eda, pca, regtree, classtree, regforest, classforest
 import pathlib
 
+external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 #---------------------------------------------------Definición de funciones para el front--------------------------------------------------------#
 def description_card():
@@ -55,7 +57,7 @@ def description_card():
                     html.Img(
                         id="crisp",
                         src="/assets/data-mining.png",
-                        style={'width': '45em', 'height': '25em'}
+                        style={'width': '26em', 'height': '16em'}
                     )
                 ]
             ),
