@@ -148,7 +148,6 @@ dtree_card = dbc.Card(
                 html.P(
                     "Un árbol de decisión es un algoritmo de aprendizaje automático utilizado tanto para problemas de regresión como de clasificación. Es una representación gráfica de un conjunto de reglas de decisión que se utilizan para tomar decisiones o predecir un valor objetivo en función de las características o atributos de los datos de entrada.",
                     className="card-text",
-                    style={"font-family": "Roboto", "font-size": "large"}
                 ),
                 html.Div(
                     [
@@ -182,7 +181,6 @@ rforest_card = dbc.Card(
                 html.P(
                     "Un bosque aleatorio es un algoritmo de aprendizaje automático que combina múltiples árboles de decisión para realizar predicciones más precisas. Cada árbol individual en el bosque se construye a partir de un subconjunto aleatorio de datos y utiliza un enfoque llamado 'ensamble' para combinar las predicciones de todos los árboles.",
                     className="card-text",
-                    style={"font-family": "Roboto", "font-size": "large"}
                 ),
                 html.Div(
                     [
