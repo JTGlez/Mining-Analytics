@@ -62,8 +62,8 @@ navbar = dbc.NavbarSimple(
         ),
         dbc.DropdownMenu(
             children=[
-                dbc.DropdownMenuItem("Clasificación", href="/classtree", style={"font-size":"14px"}),
                 dbc.DropdownMenuItem("Regresión", href="/regtree", style={"font-size":"14px"}),
+                dbc.DropdownMenuItem("Clasificación", href="/classtree", style={"font-size":"14px"}),
             ],
             nav=True,
             in_navbar=True,
@@ -71,8 +71,8 @@ navbar = dbc.NavbarSimple(
         ),
         dbc.DropdownMenu(
             children=[
-                dbc.DropdownMenuItem("Clasificación", href="/classforest", style={"font-size":"14px"}),
                 dbc.DropdownMenuItem("Regresión", href="/regforest", style={"font-size":"14px"}),
+                dbc.DropdownMenuItem("Clasificación", href="/classforest", style={"font-size":"14px"}),
             ],
             nav=True,
             in_navbar=True,
