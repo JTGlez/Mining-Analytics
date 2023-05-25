@@ -71,21 +71,34 @@ def regtree_card():
             ),
             # Texto secundario de explicacion.
             html.Div(
-                id="intro2",
-                children = "Si bien los árboles son una opción muy noble para el modelado de datos, estos tienden a tener problemas de sobreajuste excesivo en los datos. Por ello, es necesario que se consideren cuidadosamente los hiperparámetros de elección para la generación del modelo. A continuación se muestran los parámetros que deben considerarse:"
+                style =  {'text-align': 'justify'},
+                children = "Si bien los árboles son una opción muy noble para el modelado de datos, estos tienden a tener problemas de sobreajuste excesivo en los datos. Por ello, es necesario que se consideren cuidadosamente los hiperparámetros de elección para la generación del modelo. A continuación se muestran los parámetros que deben considerarse:",
             ),
 
+            html.Br(),
+
             # Muestra una figura de parámetros del árbol
-            html.Div(
-                style={'display': 'flex', 'align-items': 'center', 'justify-content': 'center', 'height': '15em'},
-                children=[
-                    html.Img(
-                        id="tree2",
-                        src="/assets/tree2.png",
-                        style = {'width': '35em', 'height': '10em'}
-                    )
-                ]
-            ),
+            dbc.Badge(
+                    "Parámetros de generación",
+                    pill=True,
+                    color="primary",
+                    style={"font-size":"15px"}
+                ),
+                html.Br(), html.Br(),
+                html.P([
+                    html.P("📏 Max Depth:", style={"font-family": "Acumin"}),
+                    "Indica la máxima profundidad a la cual puede llegar el árbol. Esto ayuda a combatir el overfitting, pero también puede provocar underfitting."
+                ], className="ms-4"),
+
+                html.P([
+                    html.P("✂️ Min Samples Split:", style={"font-family": "Acumin"}),
+                    "Indica la cantidad mínima de datos para que un nodo de decisión se pueda dividir. Si la cantidad no es suficiente este nodo se convierte en un nodo hoja."
+                ], className="ms-4"),
+
+                html.P([
+                    html.P("🍃 Min Samples Leaf:", style={"font-family": "Acumin"}),
+                    "Indica la cantidad mínima de datos que debe tener un nodo hoja."
+                ], className="ms-4"),
 
         ],
 
@@ -203,7 +216,7 @@ def parse_contents(contents, filename, date):
         if 'csv' in filename:
         # Assume that the user uploaded a CSV file
             df = pd.read_csv(
-                io.StringIO(decoded.decode('utf-8')))
+                io.StringIO(decoded.decode('utf-8')), index_col=None)
             return regtree(df, filename, df.columns)
         elif 'xls' in filename:
         # Assume that the user uploaded an excel file
@@ -222,6 +235,7 @@ def regtree(df, filename, columns):
     """
     global global_df
     global_df = df
+
 
     # Preparación de variables para su despliegue.
     fig = create_yahoo_finance_chart(df, filename)
@@ -248,7 +262,7 @@ def regtree(df, filename, columns):
         
         html.Hr(),  # Línea horizontal
 
-         dcc.Graph(
+        dcc.Graph(
             id='yahoo-finance-chart',
             figure = fig  
         ),
@@ -263,6 +277,7 @@ def regtree(df, filename, columns):
 
         html.Div(
             children=[
+                dcc.Store(id="original-options", data=[{'label': col, 'value': col} for col in df.columns]),
                 dbc.Row(
                     [
                         dbc.Col(
@@ -285,7 +300,7 @@ def regtree(df, filename, columns):
                                 dbc.Row(
                                     dbc.Checklist(
                                         id='select-predictors',
-                                        options=[{'label': col, 'value': col} for col in columns],
+                                        options = [{'label': col, 'value': col} for col in df.columns],
                                         style={"font-size": "small", "display": "grid", "justify-items": "start", "font-family": "Acumin, 'Helvetica Neue', sans-serif", "margin": "-1em 0 0 0"}
                                     ),
                                     style={"height": "auto"}
@@ -299,7 +314,7 @@ def regtree(df, filename, columns):
                                     html.Div(
                                         [
                                             dbc.Badge("ⓘ Variable Regresora", color="primary",
-                                                    id="tooltip-numpc", style={"cursor": "pointer", "display": "flex", "align-items": "center", "justify-content": "center", "height": "100%"},
+                                                    id="tooltip-numpc", style={"cursor": "pointer", "display": "flex", "align-items": "center", "justify-content": "center"},
                                                     ),
                                             dbc.Tooltip(
                                                 "Selecciona la variable target de tu análisis.",
@@ -308,13 +323,13 @@ def regtree(df, filename, columns):
                                         ],
                                         style={"height": "auto", "padding": "0"},
                                     ),
+                                    style = {"height": "2.5em"}
                                 ),
                                 dbc.Row(
-                                    dbc.Select(
+                                    dbc.Checklist(
                                         id='select-regressor',
-                                        options=[{'label': col, 'value': col} for col in columns],
-                                        value=None,
-                                        style={"font-size": "medium"}
+                                        options = [{'label': col, 'value': col} for col in df.columns],
+                                        style={"font-size": "small", "display": "grid", "justify-items": "start", "font-family": "Acumin, 'Helvetica Neue', sans-serif", "margin": "-1em 0 0 0"}
                                     ),
                                     style={"font-size":"small", "height": "2em", "font-family": "Acumin, 'Helvetica Neue', sans-serif"}
                                 ),
@@ -324,29 +339,164 @@ def regtree(df, filename, columns):
                     ],
                     style={"justify-content": "between", "height": "100%"}
                 ),
-                html.Div(
-                    children=[
-                        html.H3("Parámetros del árbol de decisión"),
+
                         html.Div(
-                            children="A continuación selecciona los parámetros que desees modificar para la generación del árbol. Si lo deseas, también es posible generar el árbol sin parámetros adicionales.",
-                            className="text-description"
+            children=[
+                dbc.Row(
+                    [
+                        dbc.Col(
+                            [
+                                dbc.Row(
+                                    html.Div(
+                                        [
+                                            dbc.Badge("ⓘ Profundad máxima del árbol", color="primary",
+                                                id="tooltip-percent", style={"cursor":"pointer", "display": "flex", "align-items": "center", "justify-content": "center", "height": "100%"}
+                                            ),
+                                            dbc.Tooltip(
+                                                [
+                                                    dcc.Markdown('''
+                                                        **Profundidad máxima del árbol:**  
+                                                        Coloca aquí el nivel máximo del árbol a generar.
+                                                    ''', style={'text-align': 'left'}),
+                                                ],
+                                                target="tooltip-percent", placement="left", style={"font-size":"10px"},
+                                            ),
+                                        ],
+                                        style={"height":"50px", "padding": "0"},
+                                    ),
+                                ),
+                                dbc.Row(
+                                    dbc.Input(
+                                        id='input-max-depth',
+                                        type='number',
+                                        placeholder='None',
+                                        min=1,
+                                        step=1,
+                                        style={"font-size": "medium"}
+                                    ),
+                                    style={"height":"50px"}
+                                ),
+                            ],
+                            class_name="me-3"
                         ),
-                        html.H5("Profundidad máxima del árbol: "),
-                        html.P("Parámetro empleado para evitar overfitting en el árbol a generar, sin embargo, una profundidad muy baja puede llevar a un underfitting. "),
-                        dcc.Input(type="number", id="input-max-depth", min=1, step=1),
-                        html.H5("Número mínimo de muestras para dividir un nodo interno: "),
-                        html.P("Permite indicar la cantidad mínima de datos necesarios para que un nodo de decisión pueda dividirse."),
-                        dcc.Input(type="number", id="input-min-samples-split", min=2, step=1),
-                        html.H5("Número mínimo de muestras para una hoja:"),
-                        html.P("Permite indicar la cantidad mínima de datos que debe de tener un nodo hoja al interior del árbol."),
-                        dcc.Input(type="number", id="input-min-samples-leaf", min=1, step=1),
-                        html.H5("Tamaño de la muestra:"),
-                        html.P("Permite indicar el ratio de valores en el dataset que se usarán para verificar el modelo. Generalmente 0.2 es un buen valor, pero es posible ajustarlo a 0.3 para obtener mayor representatividad."),
-                        dcc.Input(type="number", id="input-test-size", min=0.1, max = 0.5, step=0.1),
+
+                        dbc.Col(
+                            [
+                                dbc.Row(
+                                    html.Div(
+                                        [
+                                            dbc.Badge("ⓘ Muestras mínimas de división", color="primary",
+                                                id="tooltip-div", style={"cursor":"pointer", "display": "flex", "align-items": "center", "justify-content": "center", "height": "100%"}
+                                            ),
+                                            dbc.Tooltip(
+                                                [
+                                                    dcc.Markdown('''
+                                                        **Muestras mínimas de división**  
+                                                        Coloca aquí el mínimo de muestras para dividir nodos de decisión.
+                                                    ''', style={'text-align': 'left'}),
+                                                ],
+                                                target="tooltip-div", placement="left", style={"font-size":"10px"},
+                                            ),
+                                        ],
+                                        style={"height":"50px", "padding": "0"},
+                                    ),
+                                ),
+                                dbc.Row(
+                                    dbc.Input(
+                                        id='input-min-samples-split',
+                                        type='number',
+                                        placeholder='None',
+                                        min=1,
+                                        step=1,
+                                        style={"font-size": "medium"}
+                                    ),
+                                    style={"height":"50px"}
+                                ),
+                            ],
+                            class_name="me-3"
+                        ),
+
+                        dbc.Col(
+                            [
+                                dbc.Row(
+                                    html.Div(
+                                        [
+                                            dbc.Badge("ⓘ Muestras mínimas por hoja", color="primary",
+                                                id="tooltip-leaf", style={"cursor":"pointer", "display": "flex", "align-items": "center", "justify-content": "center", "height": "100%"}
+                                            ),
+                                            dbc.Tooltip(
+                                                [
+                                                    dcc.Markdown('''
+                                                        **Muestras mínimas de división**  
+                                                        Coloca aquí el mínimo de muestras en las hojas del árbol a generar.
+                                                    ''', style={'text-align': 'left'}),
+                                                ],
+                                                target="tooltip-leaf", placement="left", style={"font-size":"10px"},
+                                            ),
+                                        ],
+                                        style={"height":"50px", "padding": "0"},
+                                    ),
+                                ),
+                                dbc.Row(
+                                    dbc.Input(
+                                        id='input-min-samples-leaf',
+                                        type='number',
+                                        placeholder='None',
+                                        min=1,
+                                        step=1,
+                                        style={"font-size": "medium"}
+                                    ),
+                                    style={"height":"50px"}
+                                ),
+                            ],
+                            class_name="me-3"
+                        ),
+
+                        dbc.Col(
+                            [
+                                dbc.Row(
+                                    html.Div(
+                                        [
+                                            dbc.Badge("ⓘ Tamaño de la muestra", color="primary",
+                                                id="tooltip-sample", style={"cursor":"pointer", "display": "flex", "align-items": "center", "justify-content": "center", "height": "100%"}
+                                            ),
+                                            dbc.Tooltip(
+                                                [
+                                                    dcc.Markdown('''
+                                                        **Muestras mínimas de división**  
+                                                        Coloca aquí el mínimo de muestras en las hojas del árbol a generar.
+                                                    ''', style={'text-align': 'left'}),
+                                                ],
+                                                target="tooltip-sample", placement="left", style={"font-size":"10px"},
+                                            ),
+                                        ],
+                                        style={"height":"50px", "padding": "0"},
+                                    ),
+                                ),
+                                dbc.Row(
+                                    dbc.Input(
+                                        id='input-test-size',
+                                        type='number',
+                                        placeholder='None',
+                                        value=0.2,
+                                        min=0.2,
+                                        max = 0.5,
+                                        step=0.1,
+                                        style={"font-size": "medium"}
+                                    ),
+                                    style={"height":"50px"}
+                                ),
+                            ],
+                            class_name="me-3"
+                        ),
                     ],
-                    style={"font-size": "20px"},
-                    className="mt-4",
+                    style={"justify-content": "between", "height": "100%"}
                 ),
+            ],
+            style={"font-size":"20px", "margin":"30px 0"}
+        ),
+
+                
                 dbc.Row(
                     dbc.Col(
                         dbc.Button("Generar árbol", id="submit-button", color="primary", className="mt-3", style={"display": "grid", "height": "80%", "align-items": "center", "margin": "0 auto"}),
@@ -356,7 +506,6 @@ def regtree(df, filename, columns):
                 ),
                 html.Div(id="output-data", style = {"margin-top": "1em"}),
             ],
-            style={"font-size": "20px"},
             className="mt-4",
         )
 
@@ -484,21 +633,67 @@ def generate_decision_treeS(X_train, X_test, Y_train, Y_test):
 
 def create_input_form(predictors):
     input_form = []
+    tab_list = []
+
     for predictor in predictors:
-        input_form.append(
-            html.Div(
-                [
-                    html.Label(predictor),
-                    dcc.Input(
-                        type="number",
-                        id=f"input-{predictor}",  # Agrega el atributo id a la entrada
-                    ),
+        tab_list.append(
+            dbc.Tab(
+                children=[
+                    html.Div(
+                        [
+                            html.Label(predictor),
+                            dcc.Input(
+                                type="number",
+                                id=f"input-{predictor}",  # Agrega el atributo id a la entrada
+                            ),
+                        ],
+                        className="form-group",
+                    )
                 ],
-                className="form-group",
+                label=predictor,
+                tab_id=f"input-{predictor}",
+                tab_style={"width": "auto"},
             )
         )
+
+    input_form.append(
+        html.Div(
+            [
+                dbc.Tabs(
+                    tab_list,
+                    id="tabs",
+                    active_tab=f"input-{predictors[0]}",
+                    style={"margin-top": "45px"},
+                ),
+            ],
+        )
+    )
+
     return input_form
 
+
+@callback(
+    [Output("select-predictors", "options"), Output("select-regressor", "options")],
+    [Input("select-predictors", "value"), Input("select-regressor", "value")],
+    [State("original-options", "data")]
+)
+def update_checklist_options(selected_predictors, selected_regressor, original_options):
+    if selected_predictors is None:
+        selected_predictors = []
+
+    if selected_regressor is None:
+        selected_regressor = ""
+
+    updated_predictors_options = [
+        {**option, "disabled": option["value"] == selected_regressor} for option in original_options
+    ]
+
+    updated_regressor_options = [
+        {**option, "disabled": option["value"] in selected_predictors} for option in original_options
+    ]
+
+
+    return updated_predictors_options, updated_regressor_options
 
 
 @callback(Output("input-form", "children"), Input("submit-button", "n_clicks"))
@@ -556,7 +751,7 @@ def generar_arbol_svg(n_clicks):
     Arbol = graphviz.Source(Elementos)
     Arbol.format = 'pdf'
 
-    return dcc.send_file(Arbol.render(filename='ArbolAR', view=True))
+    return dcc.send_file(Arbol.render(filename='TreeGraph', view=True))
 
 @callback(
     Output("output-data", "children"),
@@ -567,13 +762,12 @@ def generar_arbol_svg(n_clicks):
     State("input-min-samples-split", "value"),
     State("input-min-samples-leaf", "value"),
     State("input-test-size", "value")
-
 )
-def split_data(n_clicks, predictors, regressor, max_depth, min_samples_split, min_samples_leaf, test_size = 0.2):
+def split_data(n_clicks, predictors, regressor, max_depth, min_samples_split, min_samples_leaf, test_size=0.2):
     global global_df
     global global_predictors
     global global_regressor
-    
+
     if n_clicks is None:
         return ""
 
@@ -585,11 +779,19 @@ def split_data(n_clicks, predictors, regressor, max_depth, min_samples_split, mi
 
     global_predictors = predictors
     global_regressor = regressor
+    print(global_predictors)
+    print(global_regressor)
+    print(global_df)
+    # Resto del código
 
-    X = np.array(global_df[predictors])
+    X = np.array(global_df[global_predictors])
     global global_X 
+    global global_Y
     global_X = X
-    Y = np.array(global_df[[regressor]])
+    print(X)
+    print(global_df[global_regressor])
+    Y = np.array(global_df[global_regressor])
+    global_Y = Y 
     X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size = test_size, random_state = 0, shuffle = True)
     
     if max_depth is None and min_samples_split is None and min_samples_leaf is None:
@@ -650,9 +852,81 @@ def split_data(n_clicks, predictors, regressor, max_depth, min_samples_split, mi
     )
 
 
-    return (
+    return html.Div(
+            [
+                dbc.Tabs(
+                    [
+                        dbc.Tab(
+                            children=[
+                                    html.H5("Los parámetros del árbol generado son los siguientes:"),
+                                    parameters_table,
+                                    html.Br(),
+                                    html.H5("Se han obtenido los siguiente valores de pronóstico en el set de entrenamiento, los cuales se comparan con los valores reales:"),
+                                    comparison_table,
+                                    html.Br(),
+                                    html.H5("A continuación se especifica la importancia numérica [0-1] de las variables predictoras en el modelo construido:"),
+                                    importance_table,
+
+                            ],
+                            label="Parámetros del Árbol de Decisión", tab_id="tab-1", tab_style={"width": "auto"}),
+
+                        dbc.Tab(
+                            children=[
+                                html.H5("El árbol fue construido de con las siguientes reglas:"),
+                                tree_rules_container,
+                                html.Br(),
+                                html.H5("A continuación, puede descargar el árbol generado con el fin de identificar si es necesario llevar a cabo un proceso de podado. Para esto, puede modificar los parámetros de generación según sea necesario."),
+                                html.Br(),
+                                html.Div([
+                                    dbc.Row(
+                                        dbc.Col(
+                                            html.Div([
+                                                dbc.Button("Descargar Árbol", id="btn-ar", color="primary", className="mt-3", style={"display": "grid", "height": "80%", "align-items": "center", "margin": "0 auto"}),
+                                                dcc.Download(id="download-ar")
+                                            ]),
+                                            width={"size": 2, "offset": 5},
+                                        ),
+                                        className="mt-3",
+                                    ),
+                                ]),
+
+                            ],
+                            label="Reglas del árbol y Gráfica", tab_id="tab-2", tab_style={"width": "auto"}),
+
+
+                        dbc.Tab(
+                            children=[
+
+                                    html.H5("El siguiente gráfico permite comparar los valores estimados por el árbol de decisión contra los valores reales de prueba:"),
+                                    dcc.Graph(figure=comparison_chart),
+
+                            ],
+                            label="Comparación entre Valores reales y Predecidos", tab_id="tab-3", tab_style={"width": "auto"}
+                        ),
+
+                        dbc.Tab(
+                            children=[
+
+                                    new_forecasts_section
+
+                            ],
+                            label="Nuevos Pronósticos", tab_id="tab-4", tab_style={"width": "auto"}
+
+                        ),
+
+                    ],
+                    id="tabs",
+                    active_tab="tab-1",
+                    style={"margin-top": "45px"}
+                ),
+            ],
+        )
+
+        
+
+
     html.H3("Generación del Árbol de Decisión:"),
-    html.P("Los parámetros del árbol generado son los siguientes:"),
+    html.H5("Los parámetros del árbol generado son los siguientes:"),
     parameters_table,
     html.Br(),
     html.P("Se han obtenido los siguiente valores de pronóstico en el set de entrenamiento, los cuales se comparan con los valores reales:"),
@@ -684,4 +958,3 @@ def split_data(n_clicks, predictors, regressor, max_depth, min_samples_split, mi
     dcc.Graph(figure=comparison_chart),
     html.Br(),
     new_forecasts_section
-)

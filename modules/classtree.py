@@ -83,8 +83,8 @@ def classtree_card():
             ),
             # Texto secundario de explicacion.
             html.Div(
-                id="intro2",
-                children = "Si bien los árboles son una opción muy noble para el modelado de datos, estos tienden a tener problemas de sobreajuste excesivo en los datos. Por ello, es necesario que se consideren cuidadosamente los hiperparámetros de elección para la generación del modelo. A continuación se muestran los parámetros que deben considerarse:"
+                style =  {'text-align': 'justify'},
+                children = "Si bien los árboles son una opción muy noble para el modelado de datos, estos tienden a tener problemas de sobreajuste excesivo en los datos. Por ello, es necesario que se consideren cuidadosamente los hiperparámetros de elección para la generación del modelo. A continuación se muestran los parámetros que deben considerarse:",
             ),
 
             # Muestra una figura de parámetros del árbol
@@ -94,7 +94,8 @@ def classtree_card():
                     html.Img(
                         id="tree2",
                         src="/assets/tree2.png",
-                        style = {'width': '35em', 'height': '10em'}
+                        style = {'width': '100%', 'height': '50%'}
+                    
                     )
                 ]
             ),
@@ -175,10 +176,12 @@ classtree.layout = html.Div(
 
                     # Muestra el módulo de carga del dataset.
                     dcc.Dropdown(
-                    id='upload-data-static-classtree',
-                    options = dropdown_options,
-                    value = dropdown_options[0]['value'],
-                    className='my-dropdown'
+                        id='upload-data-static-classtree',
+                        options=dropdown_options,
+                        value=None,  # Cambia el valor predeterminado a None
+                        clearable=False,  # Deshabilita la opción de borrar el valor
+                        placeholder="Selecciona una opción",  # Agrega el texto del placeholder
+                        className='my-dropdown',
                     ),
 
                 html.Hr(),

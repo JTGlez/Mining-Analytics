@@ -171,7 +171,9 @@ eda.layout = html.Div(
                         dcc.Dropdown(
                             id='upload-data-eda-static',
                             options=dropdown_options,
-                            value=dropdown_options[0]['value'],
+                            value=None,  # Cambia el valor predeterminado a None
+                            clearable=False,  # Deshabilita la opción de borrar el valor
+                            placeholder="Selecciona una opción",  # Agrega el texto del placeholder
                             className='my-dropdown',
                         ),
 

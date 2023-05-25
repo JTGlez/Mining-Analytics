@@ -114,21 +114,26 @@ pca.layout = html.Div(
                                 id="upload-data",
                                 children=html.Div(
                                     [
-                                        'Drag and Drop or ',
-                                        html.A('Select Files')
+                                        'Arrastra aquí el archivo en formato CSV ',
+                                        html.A('o selecciónalo')
                                     ],
                                 ),
                             style={
-                                'font-family':'Acumin',
+                                'font-family': 'Acumin',
                                 'width': '50%',
-                                'height': '60px',
+                                'height': '100%',
                                 'lineHeight': '60px',
                                 'borderWidth': '2px',
-                                'borderStyle': 'dashed',
-                                'borderRadius': '10px',
+                                'borderStyle': 'solid',
+                                'borderRadius': '5px',
                                 'textAlign': 'center',
                                 'margin': '2em auto',
-                                'cursor': 'pointer',
+                                'display': 'grid',
+                                'justify-content': 'center',
+                                'align-items': 'center',
+                                'flex-direction': 'column',
+                                # 'borderColor': '#2196F3',
+                                'background-color': '#fEfEfE'
                             },
                             multiple=True,
                             accept='.csv',

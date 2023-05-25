@@ -44,6 +44,11 @@ H5, H3 {
     font-family: Acumin, "Helvetica Neue", sans-serif;
 }
 
+#tree-text{
+    font-family: Acumin;
+    font-size: smaller;
+}
+
 /*Estilos para las columnas de cada layout*/
 
 #left-column {
