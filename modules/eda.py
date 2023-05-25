@@ -74,6 +74,7 @@ def eda_card():
 
     )
 
+# Datasets predeterminados.
 dropdown_options = [
     {'label': 'Salarios de Data Science', 'value': 'data/SalariosDS.csv'},
     {'label': 'Dataset 2', 'value': 'assets/dt2.csv'},
@@ -152,11 +153,11 @@ eda.layout = html.Div(
                     className='my-dropdown'
                     ),
 
-                html.Hr(),
-                html.Div(id = 'output-data-upload'),
-                ]),
+                    html.Hr(),
+                    # Aquí se muestra toda la ejecución del módulo EDA tras cargarse un dataset.
+                    html.Div(id = 'output-data-upload'),
+                    ]),
                 ),
-                #html.Div(id = 'output-dataset-upload'),
             ],
         ),
     ],
@@ -164,23 +165,27 @@ eda.layout = html.Div(
 
 
 def parse_contents(contents, filename, date):
+    """
+    Realiza la lectura del archivo en formato .csv, lo convierte a base64 y lo carga como un dataset de pandas para ejecutar la función eda.
+    Retorna: eda(df, filename)
+    """
 
     content_type, content_string = contents.split(',')
     decoded = base64.b64decode(content_string)
     try:
         if 'csv' in filename:
-        # Assume that the user uploaded a CSV file
+        # Carga de CSV
             df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
             print(df)
             return eda(df, filename)
         elif 'xls' in filename:
-        # Assume that the user uploaded an excel file
+        # Carga de XLS: en pruebas.
             df = pd.read_excel(io.BytesIO(decoded))
             return eda(df, filename)
     except Exception as e:
         print(e)
         return html.Div([
-            'There was an error processing this file.'
+            '¡Archivo inválido! Verifique que se encuentre cargando un archivo en formato .csv'
         ])
 
 
@@ -201,6 +206,7 @@ def eda(df, filename):
     nulls_df = pd.DataFrame(df.isnull().sum(), columns=["Null Count"]).reset_index().rename(columns={"index": "Column"})
     nulls_df['Null Count'] = nulls_df['Null Count'].astype(str)
 
+    # Obtenemos las variables numéricas para saber cuántos histogramas y diagramas se deben generar y dar la opción de seleccionar el que se desea visualizar.
     dropdown_options = [{'label': column, 'value': column} for column in df.select_dtypes(include=['int64', 'float64']).columns]
 
     dropdown = dcc.Dropdown(
@@ -519,10 +525,10 @@ def eda(df, filename):
 
         html.Br(),
 
-    ]) if has_categorical is True else html.Div(),
+    ]) if has_categorical is True else html.Div(), # Si no hay variables categóricas, no se muestran ni se crean los histogramas ni descripciones estadísticas de esa clase de variables.
          
 
-        html.H3("Paso 5. Identificación de relaciones entre pares variables"),
+        html.H3("Paso 4. Identificación de relaciones entre pares variables"),
 
         html.Div(
             children="1) Una matriz de correlaciones es útil para analizar la relación entre las variables numéricas. Se emplea la función corr()",
@@ -559,31 +565,47 @@ def eda(df, filename):
 
     ])
 
+# Callback de carga: se ejecuta cuando se realiza la carga de un dataset predeterminado o cargado por el usuario
+
 @callback(Output('output-data-upload', 'children'),
               [Input('upload-data-eda', 'contents'),
                Input('upload-data-eda-static', 'value')],
               [State('upload-data-eda', 'filename'),
                State('upload-data-eda', 'last_modified')])
 def update_output(list_of_contents, selected_file, list_of_names, list_of_dates):
+    """
+    Función Callback de EDA: ecibe tres parámetros de entrada (list_of_contents, selected_file, list_of_names, list_of_dates) y tiene como salida un objeto de tipo children que se utiliza para actualizar la salida de la aplicación.
+
+    Output('output-data-upload', 'children'): indica que el objeto de salida de esta función es un objeto de tipo 'children' que se utilizará para actualizar la salida en la aplicación.
+    [Input('upload-data-eda', 'contents'), Input('upload-data-eda-static', 'value')]: indica que esta función se ejecutará cuando se produzca un evento en los objetos de entrada 'upload-data-eda' y 'upload-data-eda-static' (designados para la carga estática o dinámica de datasets).
+    [State('upload-data-eda', 'filename'), State('upload-data-eda', 'last_modified')]: indica que esta función también necesita los valores actuales de 'filename' y 'last_modified' del objeto de entrada 'upload-data-eda'.
+    """
+    # Se obtiene el contexto del callback: permite identificar si se cargó un dataset predeterminado o uno cargado por el usuario.
     ctx = dash.callback_context
     if not ctx.triggered:
         return None
     if ctx.triggered[0]['prop_id'] == 'upload-data-eda.contents':
+        # Procesa el archivo cargado por el usuario.
         if list_of_contents is not None:
             children = [
                 parse_contents(c,n,d) for c,n,d in
                 zip(list_of_contents, list_of_names,list_of_dates)]
             return children
     elif ctx.triggered[0]['prop_id'] == 'upload-data-eda-static.value':
+        # Lee directamente el archivo en la ruta especificada para el mismo y ejecuta el análisis exploratorio.
         df = pd.read_csv(selected_file)
         return eda(df, selected_file)
 
+# Callback usado para detectar la variables numéricas en el dataset y generar histogramas de distribución para cada una de ellas.
 @callback(
     Output('histogram-graph', 'figure'),
     Input('variable-dropdown', 'value'),
     Input('dataframe-store', 'data')
 )
 def update_histogram(selected_variable, stored_data):
+    """
+    Función Callback:  se ejecuta cuando se selecciona una variable numérica en el menú desplegable 'variable-dropdown' y se actualiza el almacenamiento de datos en 'dataframe-store'. La función utiliza los datos almacenados para generar un histograma de la variable numérica seleccionada utilizando la biblioteca Plotly. La salida es un objeto 'figure' que se actualiza en el componente 'histogram-graph' de la aplicación.
+    """
     df = pd.DataFrame(stored_data)
 
     hist = go.Histogram(
@@ -604,6 +626,9 @@ def update_histogram(selected_variable, stored_data):
     return figure
 
 def create_boxplot_figure(column, df):
+    """
+    Función auxiliar que recibe una columna y un DataFrame de pandas como argumentos. Crea un diagrama de caja (boxplot) para la columna utilizando la biblioteca Plotly y devuelve el objeto 'figure' correspondiente.
+    """
     box = go.Box(
         x=df[column],
         name=column,
@@ -618,19 +643,26 @@ def create_boxplot_figure(column, df):
     )
     return go.Figure(data=[box], layout=layout)
 
-
+# Callback para identificar las variables numéricas en el dataset y generar diagramas de caja para analizar los rangos entre las observaciones.
 @callback(
     Output('boxplot-graph', 'figure'),
     Input('variable-dropdown-box', 'value'),
     Input('dataframe-store', 'data')
 )
 def update_boxplot(selected_variable, stored_data):
+    """
+    Función de callback qye se ejecuta cuando se selecciona una variable numérica en el menú desplegable 'variable-dropdown-box' y se actualiza el almacenamiento de datos en 'dataframe-store'. La función utiliza los datos almacenados y la función 'create_boxplot_figure' para generar un diagrama de caja de la variable seleccionada. La salida es un objeto 'figure' que se muestra a la salida en el elemento 'boxplot-graph' de la función EDA.
+    """
     df = pd.DataFrame(stored_data)
     figure = create_boxplot_figure(selected_variable, df)
     return figure
 
 
 def create_categorical_bar_charts(df):
+    """
+    Esta función recibe un DataFrame de pandas 'df' como argumento y crea histogramas para las variables categóricas en el DataFrame.
+    """
+
     categorical_columns = df.select_dtypes(include='object').columns
     bar_charts = []
     for col in categorical_columns:
@@ -638,20 +670,24 @@ def create_categorical_bar_charts(df):
             counts = df[col].value_counts()
             bar_chart = go.Bar(x=counts.index, y=counts.values, name=col)
             bar_charts.append(bar_chart)
-    # Crear un objeto go.Figure con las gráficas de barras y un diseño personalizado
+
+    # Crea un objeto go.Figure con las gráficas de barras y un diseño personalizado
     figure = go.Figure(data=bar_charts, layout=go.Layout(title='Distribución de variables categóricas', xaxis=dict(title='Categoría'), yaxis=dict(title='Frecuencia'), hovermode='closest'))
     return figure
 
 def create_categorical_tables(df):
+    """
+    Recibe un DataFrame de pandas 'df' como argumento y crea tablas de resumen para las variables categóricas en el DataFrame.
+    """
     data_frames = []
 
-    for col in df.select_dtypes(include='object'):
-        if df[col].nunique() < 10:
+    for col in df.select_dtypes(include='object'): # Itera sobre las columnas categóricas del DataFrame.
+        if df[col].nunique() < 10: # Agrupa el DataFrame por la columna categórica y calcula la media de las otras columnas utilizando df.groupby(col).mean().reset_index().
             table_df = df.groupby(col).mean().reset_index()
-            col_values = table_df[col].copy()  # Copia los valores de la columna categórica
+            col_values = table_df[col].copy()  # Copia los valores de la columna categórica y elimina la columna del DataFrame agrupado.
             table_df = table_df.drop(columns=[col])  # Elimina la columna categórica
-            table_df.insert(0, col, col_values)  # Inserta la columna categórica al principio del DataFrame
-            data_frames.append(table_df)
+            table_df.insert(0, col, col_values)  #Inserta la columna categórica al principio del DataFrame agrupado.
+            data_frames.append(table_df) # Añade el DataFrame agrupado a la lista data_frames.
 
     return data_frames
 
