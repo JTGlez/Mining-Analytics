@@ -6,13 +6,15 @@
 
 
 #------------------------------------------------Importación de bibliotecas------------------------------------------------------------#
-import dash # Biblioteca principal de Dash.
-from dash import dcc, html, Input, Output, callback # Módulo de Dash para acceder a componentes interactivos y etiquetas de HTML.
-from dash.dependencies import Input, Output, ClientsideFunction # Dependencias de Dash para la implementación de Callbacks.
-import dash_bootstrap_components as dbc # Biblioteca de componentes de Bootstrap en Dash para el Front-End responsive.
+import dash  # Biblioteca principal de Dash.
+# Módulo de Dash para acceder a componentes interactivos y etiquetas de HTML.
+from dash import dcc, html, Input, Output, callback
+# Dependencias de Dash para la implementación de Callbacks.
+from dash.dependencies import Input, Output, ClientsideFunction
+# Biblioteca de componentes de Bootstrap en Dash para el Front-End responsive.
+import dash_bootstrap_components as dbc
 from modules import home, eda, pca, regtree, classtree, regforest, classforest
 import pathlib
-
 
 
 #---------------------------------------------------Definición de funciones para el front--------------------------------------------------------#
@@ -28,30 +30,52 @@ def description_card():
 
         # Elementos hijos del div "description-card".
         children=[
-            html.H5("Mining Analytics"), # Título de página.
-            html.H3("Analítica de Datos inteligente"), # Subtítulo.
+            html.H5("Mining Analytics"),  # Título de página.
+            html.H3("Analítica de Datos inteligente"),  # Subtítulo.
             # Texto que explica la temática de la página web.
             html.Div(
                 id="intro",
-                children="La Minería de Datos es una disciplina que se enfoca en descubrir patrones y relaciones ocultas dentro de grandes conjuntos de datos."+
-                """ A través de técnicas avanzadas de análisis y procesamiento de datos, la Minería de Datos permite extraer información valiosa y conocimientos útiles"""+
-                """ que pueden ser utilizados para mejorar la toma de decisiones y optimizar el rendimiento en una amplia gama de sectores y aplicaciones."""
-                ,
-            ),
-            # Texto secundario de explicacion.
-            html.Div(
-                id="intro2",
-                children = "En esta aplicación podrás visualizar todo el proceso involucrado en un proyecto de Minería de Datos enfocado al sector tecnológico y financiero."
+                children="La Minería de Datos es una disciplina que se enfoca en descubrir patrones y relaciones ocultas dentro de grandes conjuntos de datos." +
+                """ A través de técnicas avanzadas de análisis y procesamiento de datos, la Minería de Datos permite extraer información valiosa y conocimientos útiles""" +
+                """ que pueden ser utilizados para mejorar la toma de decisiones y optimizar el rendimiento en una amplia gama de sectores y aplicaciones.""",
+                style={"font-family": "Roboto", "font-size": "large"}
             ),
 
-            # Muestra una figura de CRISP-DM.
+
+            html.Div(
+                children=" El proceso de minería implica varias etapas:",
+                style={"font-family": "Roboto", "font-size": "large"}
+            ),
+
+            # Muestra los pasos de DM.
             html.Div(
                 style={'display': 'flex', 'align-items': 'center', 'justify-content': 'center', 'height': '25em'},
                 children=[
                     html.Img(
                         id="crisp",
-                        src="/assets/crispdm.PNG",
-                        style = {'width': '20em'}
+                        src="/assets/data-mining.png",
+                        style={'width': '45em', 'height': '25em'}
+                    )
+                ]
+            ),
+
+            html.Br(),
+
+            # Texto secundario de explicacion.
+            html.Div(
+                id="intro2",
+                children="En esta aplicación podrás visualizar distintos procedimientos y algoritmos involucrados en un proyecto de Minería de Datos.",
+                style={"font-family": "Roboto", "font-size": "large", "font-style": "italic"}
+            ),
+
+            # Muestra un gif en la página principal.
+            html.Div(
+                style={'display': 'flex', 'align-items': 'center', 'justify-content': 'center', 'height': '25em'},
+                children=[
+                    html.Img(
+                        id="crisp",
+                        src="/assets/webscrap.gif",
+                        style={'width': '20em'}
                     )
                 ]
             ),
@@ -59,6 +83,7 @@ def description_card():
         ],
 
     )
+
 
 # Aquí se añaden cardboards informativos de cada módulo.
 eda_card = dbc.Card(
@@ -77,10 +102,12 @@ eda_card = dbc.Card(
             ),
             dbc.CardBody(
                 [
-                    html.H4("Análisis Exploratorio de Datos (EDA)", className="card-title"),
+                    html.H4("Análisis Exploratorio de Datos (EDA)",
+                            className="card-title"),
                     html.P(
                         "El análisis exploratorio de datos es una técnica de análisis de datos que se utiliza para examinar y resumir las características principales de un conjunto de datos con el fin de obtener una comprensión inicial de los mismos.",
                         className="card-text",
+                        style={"font-family": "Roboto", "font-size": "large"}
                     ),
                 ]
             ),
@@ -107,10 +134,12 @@ pca_card = dbc.Card(
             ),
             dbc.CardBody(
                 [
-                    html.H4("Análisis de Componentes Principales (PCA)", className="card-title"),
+                    html.H4("Análisis de Componentes Principales (PCA)",
+                            className="card-title"),
                     html.P(
                         "El análisis de componentes principales es una técnica estadística utilizada para reducir la dimensionalidad de un conjunto de datos mediante la identificación de las variables más importantes y la creación de nuevas variables que expliquen la mayor variabilidad posible en los datos.",
                         className="card-text",
+                        style={"font-family": "Roboto", "font-size": "large"}
                     ),
                 ]
             ),
@@ -124,29 +153,30 @@ pca_card = dbc.Card(
 dtree_card = dbc.Card(
     [
         dbc.CardImg(
-            top = True,
+            top=True,
             style={
-                    "background-image": "url('https://cdn-images-1.medium.com/v2/resize:fill:1600:480/gravity:fp:0.5:0.4/1*7cyzrfuh9hKqz2lZxi_8ug.gif')",
-                    "background-repeat": "no-repeat",
-                    "background-position": "50% 74%",
-                    "background-size": "cover",
-                    "height": "150px",
-                    "width": "100%"
-                },
+                "background-image": "url('https://cdn-images-1.medium.com/v2/resize:fill:1600:480/gravity:fp:0.5:0.4/1*7cyzrfuh9hKqz2lZxi_8ug.gif')",
+                "background-repeat": "no-repeat",
+                "background-position": "50% 74%",
+                "background-size": "cover",
+                "height": "150px",
+                "width": "100%"
+            },
         ),
         dbc.CardBody(
             [
                 html.H4("Árboles de Decisión", className="card-title"),
                 html.P(
-                        "Un árbol de decisión es un algoritmo de aprendizaje automático utilizado tanto para problemas de regresión como de clasificación. Es una representación gráfica de un conjunto de reglas de decisión que se utilizan para tomar decisiones o predecir un valor objetivo en función de las características o atributos de los datos de entrada.",
-                        className="card-text",
+                    "Un árbol de decisión es un algoritmo de aprendizaje automático utilizado tanto para problemas de regresión como de clasificación. Es una representación gráfica de un conjunto de reglas de decisión que se utilizan para tomar decisiones o predecir un valor objetivo en función de las características o atributos de los datos de entrada.",
+                    className="card-text",
+                    style={"font-family": "Roboto", "font-size": "large"}
                 ),
                 html.Div(
                     [
-                        dbc.Button("Regresión", color="primary", style={"width":"25%", "height":"40px", "display":"flex", "flex-wrap":"wrap", "align-content":"center", "justify-content": "center", "font-size":"16px"}, href="\\regtree"),
-                        dbc.Button("Clasificación", color="danger", style={"width":"25%", "height":"40px", "display":"flex", "flex-wrap":"wrap", "align-content":"center", "justify-content": "center", "font-size":"16px"}, href="\classtree")
+                        dbc.Button("Regresión", color="primary", style={"width": "25%", "height": "40px", "display": "flex", "flex-wrap": "wrap", "align-content": "center", "justify-content": "center", "font-size": "16px"}, href="\\regtree"),
+                        dbc.Button("Clasificación", color="danger", style={"width": "25%", "height": "40px", "display": "flex", "flex-wrap": "wrap", "align-content": "center", "justify-content": "center", "font-size": "16px"}, href="\classtree")
                     ],
-                    style={"display":"flex", "justify-content": "space-evenly"}
+                    style={"display": "flex", "justify-content": "space-evenly"}
                 )
             ]
         )
@@ -157,29 +187,30 @@ dtree_card = dbc.Card(
 rforest_card = dbc.Card(
     [
         dbc.CardImg(
-            top = True,
+            top=True,
             style={
-                    "background-image": "url('https://1.bp.blogspot.com/-Ax59WK4DE8w/YK6o9bt_9jI/AAAAAAAAEQA/9KbBf9cdL6kOFkJnU39aUn4m8ydThPenwCLcBGAsYHQ/s0/Random%2BForest%2B03.gif')",
-                    "background-repeat": "no-repeat",
-                    "background-position": "50% 40%",
-                    "background-size": "cover",
-                    "height": "150px",
-                    "width": "100%"
-                },
+                "background-image": "url('https://1.bp.blogspot.com/-Ax59WK4DE8w/YK6o9bt_9jI/AAAAAAAAEQA/9KbBf9cdL6kOFkJnU39aUn4m8ydThPenwCLcBGAsYHQ/s0/Random%2BForest%2B03.gif')",
+                "background-repeat": "no-repeat",
+                "background-position": "50% 40%",
+                "background-size": "cover",
+                "height": "150px",
+                "width": "100%"
+            },
         ),
         dbc.CardBody(
             [
                 html.H4("Bosque Aleatorio", className="card-title"),
                 html.P(
-                        "Un bosque aleatorio es un algoritmo de aprendizaje automático que combina múltiples árboles de decisión para realizar predicciones más precisas. Cada árbol individual en el bosque se construye a partir de un subconjunto aleatorio de datos y utiliza un enfoque llamado 'ensamble' para combinar las predicciones de todos los árboles.",
-                        className="card-text",
+                    "Un bosque aleatorio es un algoritmo de aprendizaje automático que combina múltiples árboles de decisión para realizar predicciones más precisas. Cada árbol individual en el bosque se construye a partir de un subconjunto aleatorio de datos y utiliza un enfoque llamado 'ensamble' para combinar las predicciones de todos los árboles.",
+                    className="card-text",
+                    style={"font-family": "Roboto", "font-size": "large"}
                 ),
                 html.Div(
                     [
-                        dbc.Button("Regresión", color="primary", style={"width":"25%", "height":"40px", "display":"flex", "flex-wrap":"wrap", "align-content":"center", "justify-content": "center", "font-size":"16px"}, href="\\regforest"),
-                        dbc.Button("Clasificación", color="danger", style={"width":"25%", "height":"40px", "display":"flex", "flex-wrap":"wrap", "align-content":"center", "justify-content": "center", "font-size":"16px"}, href="\classforest")
+                        dbc.Button("Regresión", color="primary", style={"width": "25%", "height": "40px", "display": "flex", "flex-wrap": "wrap", "align-content": "center", "justify-content": "center", "font-size": "16px"}, href="\\regforest"),
+                        dbc.Button("Clasificación", color="danger", style={"width": "25%", "height": "40px", "display": "flex", "flex-wrap": "wrap", "align-content": "center", "justify-content": "center", "font-size": "16px"}, href="\classforest")
                     ],
-                    style={"display":"flex", "justify-content": "space-evenly"}
+                    style={"display": "flex", "justify-content": "space-evenly"}
                 )
             ]
         )
@@ -188,11 +219,9 @@ rforest_card = dbc.Card(
 )
 
 
-
-
 # Contenedor principal de la página en un Div.
 layout = html.Div(
-    id = "page-content",
+    id="page-content",
     children=[
 
         # Contenido principal de la aplicación: se divide en 2 columnas: una con contenido explicativo y otra para elementos interactivos.
