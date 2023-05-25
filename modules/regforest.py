@@ -802,8 +802,6 @@ def create_model(n_clicks, predictors, regressor, max_depth, min_samples_split, 
         style_table={'overflowX': 'auto'},
     )
 
-    
-
     new_forecasts_section = html.Div(
         [
             html.H3("Generar nuevos pronósticos"),
@@ -822,7 +820,7 @@ def create_model(n_clicks, predictors, regressor, max_depth, min_samples_split, 
                     [
                         dbc.Tab(
                             children=[
-                                    html.H5("Los parámetros del árbol generado son los siguientes:"),
+                                    html.H5("Los parámetros del bosque generado son los siguientes:"),
                                     parameters_table,
                                     html.Br(),
                                     html.H5("Se han obtenido los siguiente valores de pronóstico en el set de entrenamiento, los cuales se comparan con los valores reales:"),
@@ -832,13 +830,13 @@ def create_model(n_clicks, predictors, regressor, max_depth, min_samples_split, 
                                     importance_table,
 
                             ],
-                            label="Parámetros del Árbol de Decisión", tab_id="tab-1", tab_style={"width": "auto"}),
+                            label="Parámetros del Bosque Aleatorio", tab_id="tab-1", tab_style={"width": "auto"}),
 
 
                         dbc.Tab(
                             children=[
 
-                                    html.H5("El siguiente gráfico permite comparar los valores estimados por el árbol de decisión contra los valores reales de prueba:"),
+                                    html.H5("El siguiente gráfico permite comparar los valores estimados por el Bosque Aleatorio contra los valores reales de prueba:"),
                                     dcc.Graph(figure=comparison_chart),
 
                             ],
