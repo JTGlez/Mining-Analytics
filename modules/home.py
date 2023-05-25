@@ -27,7 +27,6 @@ def description_card():
     """
 
     return html.Div(
-
         # ID del div.
         id="description-card",
 

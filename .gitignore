@@ -1,0 +1,2 @@
+# Se ignora la carpeta _pycache_ y su contenido
+modules/__pycache__/
