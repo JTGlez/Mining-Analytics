@@ -633,42 +633,19 @@ def generate_decision_treeS(X_train, X_test, Y_train, Y_test):
 
 def create_input_form(predictors):
     input_form = []
-    tab_list = []
-
     for predictor in predictors:
-        tab_list.append(
-            dbc.Tab(
-                children=[
-                    html.Div(
-                        [
-                            html.Label(predictor),
-                            dcc.Input(
-                                type="number",
-                                id=f"input-{predictor}",  # Agrega el atributo id a la entrada
-                            ),
-                        ],
-                        className="form-group",
-                    )
+        input_form.append(
+            html.Div(
+                [
+                    html.Label(predictor),
+                    dcc.Input(
+                        type="number",
+                        id=f"input-{predictor}",  # Agrega el atributo id a la entrada
+                    ),
                 ],
-                label=predictor,
-                tab_id=f"input-{predictor}",
-                tab_style={"width": "auto"},
+                className="form-group",
             )
         )
-
-    input_form.append(
-        html.Div(
-            [
-                dbc.Tabs(
-                    tab_list,
-                    id="tabs",
-                    active_tab=f"input-{predictors[0]}",
-                    style={"margin-top": "45px"},
-                ),
-            ],
-        )
-    )
-
     return input_form
 
 
@@ -921,40 +898,3 @@ def split_data(n_clicks, predictors, regressor, max_depth, min_samples_split, mi
                 ),
             ],
         )
-
-        
-
-
-    html.H3("Generación del Árbol de Decisión:"),
-    html.H5("Los parámetros del árbol generado son los siguientes:"),
-    parameters_table,
-    html.Br(),
-    html.P("Se han obtenido los siguiente valores de pronóstico en el set de entrenamiento, los cuales se comparan con los valores reales:"),
-    comparison_table,
-    html.Br(),
-    html.P("A continuación se especifica la importancia numérica [0-1] de las variables predictoras en el modelo construido:"),
-    importance_table,
-    html.Br(),
-    html.P("El árbol fue construido de con las siguientes reglas:"),
-    tree_rules_container,
-    html.Br(),
-    html.P("A continuación, puede descargar el árbol generado con el fin de identificar si es necesario llevar a cabo un proceso de podado. Para esto, puede modificar los parámetros de generación según sea necesario."),
-    html.Br(),
-    html.Div([
-        dbc.Row(
-            dbc.Col(
-                html.Div([
-                    dbc.Button("Descargar Árbol", id="btn-ar", color="primary", className="mt-3", style={"display": "grid", "height": "80%", "align-items": "center", "margin": "0 auto"}),
-                    dcc.Download(id="download-ar")
-                ]),
-                width={"size": 2, "offset": 5},
-            ),
-            className="mt-3",
-        ),
-    ]),
-
-    html.Br(),
-    html.P("El siguiente gráfico permite comparar los valores estimados por el árbol de decisión contra los valores reales de prueba:"),
-    dcc.Graph(figure=comparison_chart),
-    html.Br(),
-    new_forecasts_section
