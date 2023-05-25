@@ -41,34 +41,12 @@ def description_card():
                 children="La Minería de Datos es una disciplina que se enfoca en descubrir patrones y relaciones ocultas dentro de grandes conjuntos de datos." +
                 """ A través de técnicas avanzadas de análisis y procesamiento de datos, la Minería de Datos permite extraer información valiosa y conocimientos útiles""" +
                 """ que pueden ser utilizados para mejorar la toma de decisiones y optimizar el rendimiento en una amplia gama de sectores y aplicaciones.""",
-                style={"font-family": "Roboto", "font-size": "large"}
             ),
-
-
-            html.Div(
-                children=" El proceso de minería implica varias etapas:",
-                style={"font-family": "Roboto", "font-size": "large"}
-            ),
-
-            # Muestra los pasos de DM.
-            html.Div(
-                style={'display': 'flex', 'align-items': 'center', 'justify-content': 'center', 'height': '25em'},
-                children=[
-                    html.Img(
-                        id="crisp",
-                        src="/assets/data-mining.png",
-                        style={'width': '26em', 'height': '16em'}
-                    )
-                ]
-            ),
-
-            html.Br(),
 
             # Texto secundario de explicacion.
             html.Div(
                 id="intro2",
                 children="En esta aplicación podrás visualizar distintos procedimientos y algoritmos involucrados en un proyecto de Minería de Datos.",
-                style={"font-family": "Roboto", "font-size": "large", "font-style": "italic"}
             ),
 
             # Muestra un gif en la página principal.
@@ -110,7 +88,6 @@ eda_card = dbc.Card(
                     html.P(
                         "El análisis exploratorio de datos es una técnica de análisis de datos que se utiliza para examinar y resumir las características principales de un conjunto de datos con el fin de obtener una comprensión inicial de los mismos.",
                         className="card-text",
-                        style={"font-family": "Roboto", "font-size": "large"}
                     ),
                 ]
             ),
@@ -142,7 +119,6 @@ pca_card = dbc.Card(
                     html.P(
                         "El análisis de componentes principales es una técnica estadística utilizada para reducir la dimensionalidad de un conjunto de datos mediante la identificación de las variables más importantes y la creación de nuevas variables que expliquen la mayor variabilidad posible en los datos.",
                         className="card-text",
-                        style={"font-family": "Roboto", "font-size": "large"}
                     ),
                 ]
             ),
