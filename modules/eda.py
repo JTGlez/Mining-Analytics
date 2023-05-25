@@ -52,7 +52,7 @@ def eda_card():
             html.Div(
                 id="text-roboto",
                 children="El análisis exploratorio de datos (AED) es una técnica utilizada en estadística y ciencias de la computación para analizar y resumir conjuntos de datos. El objetivo del AED es descubrir patrones, identificar valores atípicos y comprender las relaciones entre las variables. En lugar de simplemente calcular estadísticas descriptivas básicas, el AED implica una exploración más profunda de los datos para descubrir información oculta.",
-
+                style = {'text-align': 'justify'}
             ),
 
             html.Br(),
@@ -64,7 +64,7 @@ def eda_card():
                     html.Img(
                         id="eda",
                         src="/assets/eda2.gif",
-                        style={'width': '35em', 'height': '27em'}
+                        style={'width': '29em', 'height': '21em'}
                     )
                 ]
             ),
@@ -75,6 +75,7 @@ def eda_card():
             html.Div(
                 id="text-roboto",
                 children="En esta sección podrás llevar a cabo este procedimiento de forma automatizada cargando uno de los datasets de prueba, o bien, cargando tu propio dataset. ¡Iniciemos a explorar los datos!",
+                style =  {'text-align': 'justify'}
             ),
 
             # Muestra una figura de exploración (GIF de lupa)
@@ -171,7 +172,7 @@ eda.layout = html.Div(
                             id='upload-data-eda-static',
                             options=dropdown_options,
                             value=dropdown_options[0]['value'],
-                            className='my-dropdown'
+                            className='my-dropdown',
                         ),
 
                         html.Hr(),
@@ -270,6 +271,27 @@ def eda(df, filename):
     boxplot_graph = dcc.Graph(id='boxplot-graph')
 
     return html.Div([
+
+        
+        dbc.Alert('El archivo cargado es: {}'.format(filename), color="success"),
+        # Solo mostramos las primeras 5 filas del dataframe, y le damos estilo para que las columnas se vean bien
+        dash_table.DataTable(
+            data=df.to_dict('records'),
+            page_size=8,
+            filter_action='native',
+            sort_action='native',
+            sort_mode='multi',
+            column_selectable='single',
+            row_deletable=True,
+            cell_selectable=True,
+            editable=True,
+            row_selectable='multi',
+            columns=[{'name': i, 'id': i, "deletable":True} for i in df.columns],
+            style_table={'height': '300px', 'overflowX': 'auto'},
+        ),
+        
+        html.Hr(),  # Línea horizontal
+
 
         # ---- TABS ----
         html.Div(

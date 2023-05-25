@@ -47,6 +47,7 @@ def description_card():
             html.Div(
                 id="intro2",
                 children="En esta aplicación podrás visualizar distintos procedimientos y algoritmos involucrados en un proyecto de Minería de Datos.",
+                style = {'text-align': 'justify'}
             ),
 
             # Muestra un gif en la página principal.
