@@ -6,10 +6,6 @@
     src: url("Acumin-BdPro.otf") format("opentype");
 }
 
-@font-face {
-    font-family: 'Roboto';
-    src: url("Roboto-Regular.ttf") format("opentype");
-}
 
 
 #app-container {
@@ -45,11 +41,6 @@ H5 {
 }
 
 H5, H3 {
-    font-family: Acumin, "Helvetica Neue", sans-serif;
-}
-
-p{
-    font-size: small;
     font-family: Acumin, "Helvetica Neue", sans-serif;
 }
 
