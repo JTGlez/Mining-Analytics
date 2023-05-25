@@ -6,6 +6,12 @@
     src: url("Acumin-BdPro.otf") format("opentype");
 }
 
+@font-face {
+    font-family: 'Roboto';
+    src: url("Roboto-Regular.ttf") format("opentype");
+}
+
+
 #app-container {
     width: 100%;
     max-width: none;
@@ -21,6 +27,7 @@ body {
 hr {
     margin: 0.3rem 0rem;
 }
+
 
 
 .navbar-logo {
