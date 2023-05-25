@@ -52,7 +52,7 @@ def eda_card():
             html.Div(
                 id="text-roboto",
                 children="El análisis exploratorio de datos (AED) es una técnica utilizada en estadística y ciencias de la computación para analizar y resumir conjuntos de datos. El objetivo del AED es descubrir patrones, identificar valores atípicos y comprender las relaciones entre las variables. En lugar de simplemente calcular estadísticas descriptivas básicas, el AED implica una exploración más profunda de los datos para descubrir información oculta.",
-                style={"font-family": "Roboto", "font-size": "large", "text-align": "justify"}
+
             ),
 
             html.Br(),
@@ -75,7 +75,6 @@ def eda_card():
             html.Div(
                 id="text-roboto",
                 children="En esta sección podrás llevar a cabo este procedimiento de forma automatizada cargando uno de los datasets de prueba, o bien, cargando tu propio dataset. ¡Iniciemos a explorar los datos!",
-                style={"font-family": "Roboto", "font-size": "large", "text-align": "justify"}
             ),
 
             # Muestra una figura de exploración (GIF de lupa)
