@@ -9,7 +9,7 @@ import dash # Biblioteca principal de Dash.
 from dash import dcc, html, Input, Output, callback # Módulo de Dash para acceder a componentes interactivos y etiquetas de HTML.
 from dash.dependencies import Input, Output, State # Dependencias de Dash para la implementación de Callbacks.
 import dash_bootstrap_components as dbc # Biblioteca de componentes de Bootstrap en Dash para el Front-End responsive.
-from modules import home, eda, pca, regtree, classtree, regforest, classforest
+from modules import home, eda, pca, regtree, classtree, regforest, classforest, kmeans
 import pathlib
 
 
@@ -78,11 +78,18 @@ navbar = dbc.NavbarSimple(
             in_navbar=True,
             label="Bosque Aleatorio",
         ),
-        dbc.NavItem(className="ml-auto"),
+        dbc.NavItem(
+            dcc.Link(
+                "Clustering Forests",
+                href="/pca",
+                className="nav-link mx-3",
+                style={"whiteSpace": "nowrap"},
+            )
+        ),
     ],
     color="white",
     dark=False,
-    sticky="top",
+    sticky="top"
 )
 
 #---------------------------------------------------Definición del layout de la página--------------------------------------------------------#
@@ -113,6 +120,8 @@ def display_module(pathname):
         return regforest.layout
     elif pathname == "/classforest":
         return classforest.layout
+    elif pathname == "/kmeans.py":
+        return kmeans.layout
     else:
         return html.Div(
             [
