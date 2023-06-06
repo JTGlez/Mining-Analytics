@@ -80,8 +80,8 @@ navbar = dbc.NavbarSimple(
         ),
         dbc.NavItem(
             dcc.Link(
-                "Clustering Forests",
-                href="/pca",
+                "K-Means + Bosques Aleatorios",
+                href="/kmeans",
                 className="nav-link mx-3",
                 style={"whiteSpace": "nowrap"},
             )
@@ -120,7 +120,7 @@ def display_module(pathname):
         return regforest.layout
     elif pathname == "/classforest":
         return classforest.layout
-    elif pathname == "/kmeans.py":
+    elif pathname == "/kmeans":
         return kmeans.layout
     else:
         return html.Div(

@@ -195,6 +195,37 @@ rforest_card = dbc.Card(
     class_name="mb-4"
 )
 
+kmeans_card = dbc.Card(
+    dbc.CardLink(
+        [
+            dbc.CardImg(
+                top=True,
+                style={
+                    "background-image": "url('https://miro.medium.com/v2/resize:fit:1400/1*Ht06cKFv9S9XWCsnR2kSpw.gif')",
+                    "background-repeat": "no-repeat",
+                    "background-position": "50% 50%",
+                    "background-size": "cover",
+                    "height": "150px",
+                    "width": "100%"
+                },
+            ),
+            dbc.CardBody(
+                [
+                    html.H4("K-Means + Bosques Aleatorios",
+                            className="card-title"),
+                    html.P(
+                        "Este modelo híbrido combina dos técnicas de aprendizaje automático: el algoritmo de agrupamiento K-means y el algoritmo de clasificación Random Forests. El objetivo de este enfoque es utilizar la agrupación inicial de los datos realizada por K-means para mejorar la precisión y el rendimiento del modelo de Random Forests.",
+                        className="card-text",
+                    ),
+                ]
+            ),
+        ],
+        href="\kmeans",
+        style={"text-decoration": "none", "color": "black"}
+    ),
+    class_name="mb-4 card-anim",
+)
+
 
 # Contenedor principal de la página en un Div.
 layout = html.Div(
@@ -222,7 +253,8 @@ layout = html.Div(
                         eda_card,
                         pca_card,
                         dtree_card,
-                        rforest_card
+                        rforest_card,
+                        kmeans_card
                     ],
                 ),
             ],

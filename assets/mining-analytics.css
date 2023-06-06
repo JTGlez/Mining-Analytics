@@ -27,11 +27,11 @@ hr {
 
 
 .navbar-logo {
-    width: 10em; 
+    width: 10em;
     height: 3.8em;
     margin: 0 auto;
     padding: 0;
-    
+
 }
 
 
@@ -40,11 +40,12 @@ H5 {
     font-weight: 300;
 }
 
-H5, H3 {
+H5,
+H3 {
     font-family: Acumin, "Helvetica Neue", sans-serif;
 }
 
-#tree-text{
+#tree-text {
     font-family: Acumin;
     font-size: smaller;
 }
@@ -79,13 +80,12 @@ H5, H3 {
     font-size: 13px;
 }
 
-.text-upload{
+.text-upload {
     text-align: center;
 }
 
-.text-description{
-    font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif
-
+.text-description {
+    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif
 }
 
 .draglayer {
@@ -98,18 +98,18 @@ H5, H3 {
 
 /*Estilos para figuras*/
 
-.crisp{
+.crisp {
     display: flexbox;
     justify-content: center;
     margin: 0 1000em;
 }
 
-.my-dropdown{
+.my-dropdown {
     width: 50%;
     margin: 0 auto;
 }
 
-.my-dropdown .Select-menu-outer{
+.my-dropdown .Select-menu-outer {
     display: inline-block;
     position: relative;
     font-family: Acumin;
@@ -121,7 +121,7 @@ H5, H3 {
 }
 
 /*Borde para los contenedores de las tablas generadas */
-.dash-table-container{
+.dash-table-container {
     position: relative;
     display: grid;
     border: 1px solid rgb(171, 169, 169);
@@ -131,31 +131,31 @@ H5, H3 {
     margin: 0 auto;
 }
 
-.column-header-name{
+.column-header-name {
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif
 }
 
-.unfocused{
+.unfocused {
     font-family: Acumin, 'Helvetica Neue', sans-serif;
     font-size: small;
     font-weight: lighter;
 }
 
-.form-group{
+.form-group {
     font-family: Acumin, 'Helvetica Neue', sans-serif;
     color: #2c8cff;
     font-weight: 100;
 }
 
 /* Animación para las Cards */
-.card-anim:hover{
+.card-anim:hover {
     box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
     transform: translateY(-2px);
     transition: all 0.3s ease;
     background-color: #f2f2f2;
 }
 
-.drag:hover{
+.drag:hover {
     background-color: #c1c1c1;
 }
 
@@ -163,7 +163,8 @@ H5, H3 {
   ##Diseño responsive: para mòviles (iPad, Android, Surface)
   */
 
-@media only screen and (max-width: 750px), screen and (min-width: 768px) and (max-width: 1024px) {
+@media only screen and (max-width: 750px),
+screen and (min-width: 768px) and (max-width: 1024px) {
 
     body {
         font-size: 13px;
@@ -186,7 +187,8 @@ H5, H3 {
         margin: 10px 0px;
     }
 
-    #left-column, #right-column {
+    #left-column,
+    #right-column {
         width: 100%;
         margin-left: 0px;
     }
@@ -199,13 +201,14 @@ H5, H3 {
         text-align: center;
     }
 
-    .table-row > div {
+    .table-row>div {
         width: 100% !important;
         text-align: center;
         margin: auto;
     }
 
-    .table-row:nth-child(even), .table-row:nth-child(odd) {
+    .table-row:nth-child(even),
+    .table-row:nth-child(odd) {
         background-color: #FFFFFF;
     }
 
@@ -213,10 +216,15 @@ H5, H3 {
         display: none;
     }
 
-    button, .button{
-        margin-left: auto; 
+    button,
+    .button {
+        margin-left: auto;
         margin-right: 0;
     }
-    
 
+
+}
+
+.js-plotly-plot .plotly .user-select-none {
+    margin: 20px auto;
 }

@@ -1,2 +1,5 @@
 # Se ignora la carpeta _pycache_ y su contenido
 modules/__pycache__/
+
+# Se ingora la carpeta .vscode
+.vscode
