@@ -155,14 +155,14 @@ kmeans.layout = html.Div(
 
 # Función para generar un heatmap a partir de un dataframe
 def generar_figura_heatmap(df):
-    corr_clientes = df.corr(numeric_only=True)
-    lower_corr = np.triu(corr_clientes)
+    corr = df.corr(numeric_only=True)
+    lower_corr = np.triu(corr)
 
     heatmap_correlaciones = go.Figure(data=go.Heatmap(
         z=lower_corr,
         colorscale='RdBu_r',
-        x=list(corr_clientes.columns),
-        y=list(corr_clientes.columns),
+        x=list(corr.columns),
+        y=list(corr.columns),
         zmin=-1,
         zmax=1
     ))
@@ -175,22 +175,22 @@ def generar_figura_heatmap(df):
     )
     heatmap_correlaciones.update_yaxes(tickmode='linear')
 
-    num_variables = len(corr_clientes.columns)
+    num_variables = len(corr.columns)
     size_factor = 1.0
 
     if num_variables > 15:
         size_factor = 15.0 / num_variables
 
-    for i in range(0, corr_clientes.shape[0]):
-        for j in range(i+1, corr_clientes.shape[1]):
-            if corr_clientes.iloc[i, j] >= 0.67 or corr_clientes.iloc[i, j] <= -0.67:
+    for i in range(0, corr.shape[0]):
+        for j in range(i+1, corr.shape[1]):
+            if corr.iloc[i, j] >= 0.67 or corr.iloc[i, j] <= -0.67:
                 color = 'white'
             else:
                 color = 'black'
             heatmap_correlaciones.add_annotation(
-                x=corr_clientes.columns[j],
+                x=corr.columns[j],
                 y=i,
-                text=str(round(corr_clientes.iloc[i, j], 3)),
+                text=str(round(corr.iloc[i, j], 3)),
                 showarrow=False,
                 font=dict(color=color, size=10 * size_factor)
             )
