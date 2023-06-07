@@ -778,12 +778,57 @@ def kmeans_algorithm(df_estandarizada, num_clusters, df_origin):
     # Obtencion de los centroides
     centroides = df_origin.groupby('cluster_partition').mean()
     centroides['Núm. Elementos'] = df_origin.groupby('cluster_partition').size()
-    print(centroides)
 
     #Gráfica 3D
     graph_3d = graph_3d_clusters(df_estandarizada, cluster_partitional, num_clusters, df_origin)
 
     return elbow_graph, elbow_point_graph, centroides, graph_3d, kl
+
+def importance_bar(vars, modelo):
+    importance = pd.DataFrame({'Variable':vars, 'Importancia': modelo.feature_importances_}).sort_values('Importancia', ascending=False)
+    
+    graph_importance = go.Figure(data=[
+        go.Bar(
+            x=importance['Variable'],
+            y=importance['Importancia'],
+            marker=dict(
+                color=importance['Importancia'],
+                colorscale='Bluered'
+            ),
+            text=importance['Importancia'],
+            texttemplate='%{text:.2}',
+            textposition='outside'
+        )
+    ])
+
+    graph_importance.update_layout(
+        title='Importancia de las variables',
+        xaxis=dict(title='Variables'),
+        yaxis=dict(title='Importancia'),
+        uniformtext=dict(minsize=8, mode='hide'),
+        legend_title='Importancia de las variables',
+        width=600,
+        height=400
+    )
+    return graph_importance
+
+def auroc_curve(mod, kal, xval, yval):
+    clusters = np.arange(kal.elbow)
+    Y_score = mod.predict_proba(xval)
+    Y_test_bin = label_binarize(yval, classes=clusters)
+    n_classes = Y_test_bin.shape[1]
+
+    fpr = dict()
+    tpr = dict()
+
+    auroc = go.Figure()
+    for i in range(n_classes):
+        fpr[i], tpr[i], _ = roc_curve(Y_test_bin[:, i], Y_score[:, i])
+        auroc.add_trace(go.Scatter(x=fpr[i], y=tpr[i], name='Clase {}'.format(i+1)+', AUC: {}'.format(auc(fpr[i], tpr[i]).round(6))))
+    auroc.add_trace(go.Scatter(x=[0, 1], y=[0, 1], name='Referencia', line=dict(color='navy', dash='dash')))
+    auroc.update_layout(title_text='Rendimiento', xaxis_title='False Positive Rate', yaxis_title='True Positive Rate', width=800, height=500)
+    
+    return auroc
 
 # CALLBACK PARA MOSTRAR LOS RESULTADOS
 @callback(
@@ -798,7 +843,9 @@ def kmeans_algorithm(df_estandarizada, num_clusters, df_origin):
     State("datos-prueba", "value"),
     State("estimadores", "value")
 )
-def create_model(n_clicks, eliminar, method_standarization, k_clusters, max_depth, min_samples_split, min_samples_leaf, test_size, estimators):
+def create_model(n_clicks, eliminar, method_standarization, k_clusters, max_prof, samples_split, samples_leaf, tam_size, estimators):
+    global df_original
+    global classification_rforest
     if n_clicks is not None:
         # ---- ELIMINACIÓN DE VARIABLES Y LABEL ENCODING ----
         if len(eliminar) != 0:
@@ -813,6 +860,85 @@ def create_model(n_clicks, eliminar, method_standarization, k_clusters, max_dept
         matriz_estandarizada = estandarizar_datos(df_drop, method_standarization)
         # ---- K-Means ALGORITHM ----
         grafico_codo, grafico_punto_codo, centroids, tridi_graph, kl = kmeans_algorithm(matriz_estandarizada, k_clusters, df_original)
+        # ---- Clasificación por Bosques ALGORITHM ----
+        # Predictoras:
+        X_train = df_original.drop('cluster_partition', axis=1)
+        X = np.array(X_train)
+        # Regresora:
+        Y_train = df_original[['cluster_partition']]
+        Y = np.array(Y_train)
+        # Conjuntos de entrenamiento y validación
+        X_train, X_validation, Y_train, Y_validation = model_selection.train_test_split(X, Y, test_size=tam_size, random_state=0, shuffle=True)
+        # Creación del modelo dependiendo si se pasan valores o no
+        if max_prof is None and samples_split is None and samples_leaf is None:
+            classification_rforest = RandomForestClassifier(random_state=0)
+        else:
+            classification_rforest = RandomForestClassifier(n_estimators=estimators,
+                                                    max_depth=max_prof,
+                                                    min_samples_split=samples_split,
+                                                    min_samples_leaf=samples_leaf,
+                                                    random_state=0)
+        classification_rforest.fit(X_train, Y_train)
+        Y_predict = classification_rforest.predict(X_validation)
+        # Comparación
+        compare = pd.DataFrame({'Y_Real:':Y_validation.flatten(), 'Y_Pronosticado':Y_predict})
+        compare.columns = compare.columns.astype(str)
+        compare_table = dash_table.DataTable(
+            data=compare.to_dict('records'),
+            columns=[{'name': i, 'id': i} for i in compare.columns.astype(str)],
+            style_table={'height': '300px', 'overflowX': 'auto'},
+        )
+        # Matriz de clasificación
+        matrix = pd.crosstab(Y_validation.ravel(), Y_predict, rownames=['Reales'], colnames=['Clasificación'])
+        matrix.index.set_names('Reales', inplace=True)
+        matrix.columns.set_names('Clasificación', inplace=True)
+        matrix = matrix.reset_index()
+        matrix_table = dash_table.DataTable(
+        data=matrix.to_dict('records'),
+        columns=[{'name': i, 'id': i} for i in matrix.columns.astype(str)],
+        style_table={'overflowX': 'auto'},
+    )
+
+        # Parametros del modelo de clasificacion
+        report = classification_report(Y_validation, Y_predict, output_dict=True)
+        report_df = pd.DataFrame(report).transpose().round(2)
+        report_df = report_df.reset_index().rename(columns={'index':'Metric'})
+        report_table = dash_table.DataTable(
+            data=report_df.to_dict('records'),
+            columns=[{'name': i, 'id': i} for i in report_df.columns.astype(str)],
+            style_table={'overflowX': 'auto', "border": "none"},
+        )
+        parameters = {
+            'criterion': classification_rforest.criterion,
+            'feature_importances': classification_rforest.feature_importances_,
+            'Exactitud': accuracy_score(Y_validation, Y_predict)
+        }
+        parameters_list = [
+            {"parameter": key, "value": value}
+            for key, values in parameters.items()
+            for value in (values if isinstance(values, (list, np.ndarray)) else [values])
+        ]
+        parameters_df = pd.DataFrame(parameters_list)
+        parameters_table = dash_table.DataTable(
+            data=parameters_df.to_dict('records'),
+            columns=[{'name': i, 'id': i} for i in parameters_df.columns.astype(str)],
+            style_table={'overflowX': 'auto', "border": "none"},
+        )
+        # Gráfico de barras con la importancia de cada variable
+        bar = importance_bar(df_original.drop('cluster_partition', axis=1).columns, classification_rforest)
+        # AUROC
+        auroc_graph = auroc_curve(classification_rforest, kl, X_validation, Y_validation)
+        # New predictions
+        new_predictions = html.Div(
+            [
+                html.H3("Generar nuevos pronósticos"),
+                html.P("Introduce los valores de las variables predictoras:"),
+                html.Div(id="input-form-class-kmeans"),
+                html.Button("Clasificar", id="predict-button-kmeans", className="mt-3"),
+                html.Div(id="classification-result-kmeans", className="mt-4"),
+            ],
+            className="mt-4",
+        )
     elif n_clicks is None:
         import dash.exceptions as de
         raise de.PreventUpdate
@@ -882,5 +1008,144 @@ def create_model(n_clicks, eliminar, method_standarization, k_clusters, max_dept
                     id="tabs",
                     active_tab="tab-1",
                 ),
+
+                html.H3("Clasificación con Bosques Aleatorios", style={"padding-top":"20px", "border-top":"solid 2px black", "margin-top":"30px"}),
+                dbc.Tabs(
+                    [
+                        dbc.Tab(
+                            children=[
+                                    # Parámetros
+                                    dbc.Alert('ⓘ Parámetros del árbol:', style={"font-size":"20px", "font-weight":"bold"}),
+                                    html.P("Se muestra la Exactitud del modelo, así como una gráfica con la importancia de cada variable para el modelo."),
+                                    parameters_table,
+                                    # Gráfica de importancia
+                                    dcc.Graph(figure=bar),
+                                    # Reporte completo
+                                    dbc.Alert('ⓘ Reporte de la clasificación:', style={"font-size":"20px", "font-weight":"bold"}),
+                                    html.P("Se muestra la siguiente información: "),
+                                    html.Div(
+                                        [
+                                            dbc.Badge("Precisión: ", pill=True, color="primary", style={"width":"10%", "height":"fit-content"}),
+                                            html.P(" Proporción de instancias clasificadas correctamente como positivas entre todas las instancias clasificadas como positivas, es decir, mide la exactitud del modelo al predecir los positivos verdaderos.", style={"line-height":"initial", "width":"90%"}),
+                                        ],
+                                        style={"display":"flex", "column-gap":"10px", "margin-top":"20px"},
+                                    ),
+                                    html.Div(
+                                        [
+                                            dbc.Badge("Recall: ", pill=True, color="success", style={"width":"10%", "height":"fit-content"}),
+                                            html.P("Mide la capacidad del modelo para identificar correctamente los casos positivos. Un valor alto de recall indica que hay pocos falsos negativos.", style={"line-height":"initial", "width":"90%"}),
+                                        ],
+                                        style={"display":"flex", "column-gap":"10px", "margin-top":"20px"},
+                                    ),
+                                    html.Div(
+                                        [
+                                            dbc.Badge("F1-score: ", pill=True, color="warning", style={"width":"10%", "height":"fit-content"}),
+                                            html.P("Medida que combina la precisión y el recall en un solo valor. Es útil cuando hay un desequilibrio entre las clases y deseamos tener una métrica única para evaluar el rendimiento general del modelo.", style={"line-height":"initial", "width":"90%"}),
+                                        ],
+                                        style={"display":"flex", "column-gap":"10px", "margin-top":"20px"},
+                                    ),
+                                    html.Div(
+                                        [
+                                            dbc.Badge("Support: ", pill=True, color="danger", style={"width":"10%", "height":"fit-content"}),
+                                            html.P("Indica el número de instancias en cada clase del conjunto de datos.", style={"line-height":"initial", "width":"90%"}),
+                                        ],
+                                        style={"display":"flex", "column-gap":"10px", "margin":"20px 0"},
+                                    ),
+                                    report_table,
+                            ],
+                            label="Calidad de la predicción", tab_id="tab-1", tab_style={"width": "auto"}
+                        ),
+                        
+                        dbc.Tab(
+                            children=[
+                                    # Comparación
+                                    dbc.Alert('ⓘ Comparción:', style={"font-size":"20px", "font-weight":"bold"}),
+                                    html.P("Vistazo rápido a la precisión del modelo, se comparan los valores reales contra los valores pronosticados"),
+                                    compare_table,
+                                    # Matriz de clasificación
+                                    dbc.Alert('ⓘ Matriz de clasificación:', style={"font-size":"20px", "font-weight":"bold"}),
+                                    html.P("La matriz de clasificación obtenida permite identificar en qué observaciones el modelo acertó y en cuáles falló de manera más precisa."),
+                                    matrix_table,
+                            ],
+                            label="Clasificación", tab_id="tab-2", tab_style={"width": "auto"}
+                        ),
+
+                        dbc.Tab(
+                            children=[
+                                    dcc.Graph(figure=auroc_graph)
+                            ],
+                            label="Curva ROC", tab_id="tab-3", tab_style={"width": "auto"}
+                        ),
+
+                        dbc.Tab(
+                            children=[
+                                new_predictions,
+                            ],
+                            label='Nuevos Pronósticos',
+                            tab_id='tab-4', tab_style={'width':'auto'}
+                        ),
+
+                    ],
+                    id="tabs",
+                    active_tab="tab-1",
+                ),
             ],
         )
+
+# CREACIÓN DE INPUTS
+def create_input_form(predictors):
+    input_form = []
+    for predictor in predictors:
+        input_form.append(
+            html.Div(
+                [
+                    html.Label(predictor),
+                    dcc.Input(
+                        type="number",
+                        id=f"input-{predictor}",  # Agrega el atributo id a la entrada
+                    ),
+                ],
+                className="form-group",
+            )
+        )
+    return input_form
+
+# CALLBACK PARA CREAR INPUTS
+@callback(Output("input-form-class-kmeans", "children"), Input("kmeans-btn", "n_clicks"))
+def update_input_form(n_clicks):
+    if n_clicks is None:
+        return ""
+    return create_input_form(df_original.drop('cluster_partition', axis=1).columns)
+
+def predict_new_values(class_tree, predictors, input_values):
+    input_data = pd.DataFrame(input_values, columns=predictors)
+    prediction = class_tree.predict(input_data)
+    return prediction
+
+# CALLBACK PARA MOSTRAR LAS NUEVAS PREDICCIONES
+@callback(
+    Output("classification-result-kmeans", "children"),
+    Input("predict-button-kmeans", "n_clicks"),
+    State("input-form-class-kmeans", "children"),
+)
+def show_prediction(n_clicks, input_form):
+    if n_clicks is None or input_form is None:
+        return ""
+
+    input_values = {}
+    all_states = dash.callback_context.states
+    for child in input_form:
+        label = child['props']['children'][0]['props']['children']
+        if label in df_original.drop('cluster_partition', axis=1).columns:
+            input_id = child['props']['children'][1]['props']['id']
+            try:
+                # Agrega el id del campo de entrada a all_states
+                all_states[f"{input_id}.value"] = child['props']['children'][1]['props']['value']
+                input_values[label] = float(all_states[f"{input_id}.value"])
+            except KeyError:
+                print(f"Error: No se encontró la clave '{input_id}.value' en dash.callback_context.states")
+                print("Valores de entrada:", input_values)
+                print("Claves presentes en dash.callback_context.states:", dash.callback_context.states.keys())
+
+    prediction = predict_new_values(classification_rforest, df_original.drop('cluster_partition', axis=1).columns, [input_values])
+    return dbc.Alert(f"La clasificación con base en los valores introducidos es: {prediction[0]}", color='info')
