@@ -680,7 +680,7 @@ def create_input_form(predictors):
     return input_form
 
 
-@callback(Output("input-form-forest", "children"), Input("submit-button", "n_clicks"))
+@callback(Output("input-form-regforest", "children"), Input("submit-button", "n_clicks"))
 def update_input_form(n_clicks):
     if n_clicks is None:
         return ""
@@ -694,7 +694,7 @@ def predict_new_values(reg_tree, predictors, input_values):
 @callback(
     Output("prediction-result-regforest", "children"),
     Input("predict-button", "n_clicks"),
-    State("input-form-forest", "children"),
+    State("input-form-regforest", "children"),
 )
 def show_prediction(n_clicks, input_form):
     if n_clicks is None or input_form is None:
@@ -806,9 +806,9 @@ def create_model(n_clicks, predictors, regressor, max_depth, min_samples_split, 
         [
             html.H3("Generar nuevos pronósticos"),
             html.P("Introduce los valores de las variables predictoras:"),
-            html.Div(id="input-form-forest"),
+            html.Div(id="input-form-regforest"),
             html.Button("Predecir", id="predict-button", className="mt-3"),
-            html.Div(id="prediction-result-forest", className="mt-4"),
+            html.Div(id="prediction-result-regforest", className="mt-4"),
         ],
         className="mt-4",
     )
