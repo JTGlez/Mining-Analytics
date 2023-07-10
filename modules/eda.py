@@ -11,7 +11,6 @@ import numpy as np
 import io
 from io import BytesIO
 import dash  # Biblioteca principal de Dash.
-from msilib.schema import Component
 # Módulo de Dash para acceder a componentes interactivos y etiquetas de HTML.
 from dash import dcc, html, Input, Output, callback
 # Dependencias de Dash para la implementación de Callbacks.
