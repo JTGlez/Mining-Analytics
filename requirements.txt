@@ -1,3 +1,4 @@
+gunicorn==19.7.1
 dash
 numpy==1.21.6
 pandas==1.5.1
