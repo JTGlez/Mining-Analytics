@@ -1,3 +1,4 @@
+python==3.9
 dash
 numpy==1.21.6
 pandas==1.5.1
