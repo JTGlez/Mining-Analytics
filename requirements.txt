@@ -1,5 +1,4 @@
 dash
-pandas
 numpy==1.21.6
 pandas==1.5.1
 pathlib==1.0.1
